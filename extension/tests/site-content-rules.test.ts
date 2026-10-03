@@ -50,13 +50,63 @@ it('distinguishes generic, ignore-only, no matches, and explicitly empty content
   document.body.innerHTML = '<main><p id="one">First article sentence.</p><p class="skip">Second article sentence.</p></main>';
   installContentPolicy(document, { host, ignore: ['.skip'] });
   expect(collectUnits().map(unit => unit.text)).toEqual(['First article sentence.']);
-  for (const content of [[], ['.missing']]) {
-    installContentPolicy(document, { host, content });
-    expect(collectUnits()).toEqual([]);
-    expect((await collectUnitsAsync(document.body)).units).toEqual([]);
-  }
+  installContentPolicy(document, { host, content: ['.missing'], ignore: ['.skip'] });
+  expect(collectUnits().map(unit => unit.text)).toEqual(['First article sentence.']);
+  expect((await collectUnitsAsync(document.body)).units.map(unit => unit.text)).toEqual(['First article sentence.']);
+  installContentPolicy(document, { host, content: [] });
+  expect(collectUnits()).toEqual([]);
+  expect((await collectUnitsAsync(document.body)).units).toEqual([]);
   installContentPolicy(document, { host: 'other.test', content: [] });
   expect(collectUnits()).toHaveLength(2);
+});
+
+it('uses page-wide matches for subtrees and rechecks after layout changes', async () => {
+  document.body.innerHTML = '<main><p class="prose">Selected paragraph.</p><section><p>Outside paragraph.</p></section></main>';
+  installContentPolicy(document, { host, content: ['.prose'], ignore: ['.skip'] });
+  const section = document.querySelector('section')!;
+  expect(collectUnits(section)).toEqual([]);
+  expect((await collectUnitsAsync(section)).units).toEqual([]);
+  const observer = new MutationObserver(() => {});
+  observer.observe(document.body, { childList: true, subtree: true });
+  try {
+    section.insertAdjacentHTML('beforeend', '<p>Outside addition.</p>');
+    expect(mutationIndexDelta(observer.takeRecords(), []).added).toEqual([]);
+    document.querySelector('main')!.innerHTML = '<section><p>Unadapted page paragraph.</p><p class="skip">Keep original.</p></section>';
+    expect(mutationIndexDelta(observer.takeRecords(), []).added.map(u => u.text)).toEqual(['Unadapted page paragraph.']);
+    document.querySelector('main')!.insertAdjacentHTML('beforeend', '<p class="prose">Late selected paragraph.</p>');
+    expect(mutationIndexDelta(observer.takeRecords(), []).added.map(u => u.text)).toEqual(['Late selected paragraph.']);
+    expect(collectUnits(document.querySelector('section')!)).toEqual([]);
+  } finally {
+    observer.disconnect();
+  }
+});
+
+it('checks selector matches within the shadow tree when collecting its subtrees', async () => {
+  document.body.innerHTML = '<p class="prose">Main document prose.</p><div id="shadow"></div>';
+  installContentPolicy(document, { host, content: ['.prose'] });
+  const shadow = document.getElementById('shadow')!.attachShadow({ mode: 'open' });
+  shadow.innerHTML = '<p>Shadow fallback paragraph.</p><button>Keep control.</button>';
+  expect(collectUnits(shadow).map(u => u.text)).toEqual(['Shadow fallback paragraph.']);
+  expect((await collectUnitsAsync(shadow)).units.map(u => u.text)).toEqual(['Shadow fallback paragraph.']);
+  shadow.innerHTML = '<p class="prose">Selected shadow paragraph.</p><section><p>Outside shadow paragraph.</p></section>';
+  expect(collectUnits(shadow.querySelector('section')!)).toEqual([]);
+  expect(collectUnits(shadow).map(u => u.text)).toEqual(['Selected shadow paragraph.']);
+});
+
+it.each(['bilingual', 'replace'] as const)('preserves exclusions and restores generic fallback content (%s)', mode => {
+  document.body.innerHTML = '<main><p>Read <span class="keep">BrandName</span> carefully.</p><p class="skip">Keep original.</p><pre>Code sample.</pre><button>Save settings.</button><div contenteditable="true">Draft text.</div><p translate="no">Opt out.</p></main>';
+  installContentPolicy(document, { host, content: ['.missing'], ignore: ['.keep', '.skip'] });
+  const units = collectUnits();
+  expect(units.map(u => u.text)).toEqual(['Read carefully.']);
+  const unit = units[0]!;
+  const token = document.querySelector('.keep');
+  expect(unit.rich?.slots).toEqual(['Read', 'carefully.']);
+  render(unit, ['阅读', '仔细。'], mode);
+  const target = mode === 'replace' ? unit.el : unit.el.querySelector('.tap-translate-target')!;
+  expect(target.textContent).toBe('阅读 BrandName 仔细。');
+  restoreDom();
+  expect(unit.el.textContent).toBe('Read BrandName carefully.');
+  expect(document.querySelector('.keep')).toBe(token);
 });
 
 it('uses the same policy for sync, async, incremental and rich skeletons; preserves identity, events and emoji', async () => {

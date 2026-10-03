@@ -27,9 +27,12 @@ export function socialSiteContract(site: string, fixture: string, expected: stri
       expect(collectUnits(el('body')).map(u => u.text)).toEqual(['Explore our discoveries today.']);
       expect(collectUnits(el('action'))).toEqual([]);
     });
-    it('keeps unknown layouts in their original language', () => {
+    it('falls back to generic collection for unknown layouts', async () => {
       document.body.innerHTML = '<main><h1>Account preferences</h1><p>Choose your settings.</p><button>Save</button></main>';
-      expect(collectUnits()).toEqual([]);
+      // Facebook's explicit heading exclusions still apply during fallback.
+      const expected = site === 'facebook' ? ['Choose your settings.'] : ['Account preferences', 'Choose your settings.'];
+      expect(collectUnits().map(u => u.text)).toEqual(expected);
+      expect((await collectUnitsAsync()).units.map(u => u.text)).toEqual(expected);
     });
     it('excludes controls and hashtags even when embedded inside selected prose', () => {
       el('body').insertAdjacentHTML('beforeend', '<a class="notranslate" href="/hashtag/space">#space</a><div role="button"><span>Show more</span></div><span translate="no">KeepToken</span>');

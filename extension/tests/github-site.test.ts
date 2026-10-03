@@ -40,9 +40,10 @@ describe('GitHub content selection', () => {
     expect(collectUnits(document.querySelector('nav')!)).toEqual([]);
   });
 
-  it('does not fall back to the whole page when no content selector matches', () => {
+  it('falls back to generic collection when no content selector matches', async () => {
     document.body.innerHTML = '<main><h1>Account settings</h1><p>Choose your preferences</p><button>Save</button></main>';
-    expect(texts()).toEqual([]);
+    expect(texts()).toEqual(['Account settings', 'Choose your preferences']);
+    expect((await collectUnitsAsync()).units.map(u => u.text)).toEqual(texts());
   });
 
   it('keeps long Markdown split into paragraphs rather than translating the container', () => {

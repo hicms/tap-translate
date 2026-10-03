@@ -9,7 +9,7 @@ import { isA11yHidden as isA11y, isOursElement } from '../dom-guards';
 import { yieldToMain } from '../runtime/yield';
 import { isReplacementWrite } from '../renderer/replacement';
 import {
-  isContentCandidate, isPreservedElement,
+  isContentCandidate, isPreservedElement, refreshContentScope,
   siteContentRoot, siteContentSelector,
 } from './content-policy';
 import { needsRichSlots } from './rich-policy';
@@ -777,6 +777,7 @@ function* collectPasses(
   units: TranslationUnit[],
   seen: Set<Node>,
 ): Generator<void> {
+  refreshContentScope(scope);
   const content = siteContentSelector(scope);
   for (const el of matchAll(scope, content ? `${BLOCKS}, ${content}` : BLOCKS)) {
     yield;

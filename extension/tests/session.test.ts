@@ -264,6 +264,35 @@ describe('ContentSession scheduling state machine', () => {
     await startP;
   });
 
+  it('translates an unadapted page and later additions after navigation from a matched layout', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<main><p class="prose">Adapted page paragraph.</p><p>Outside scope.</p></main>';
+    vi.mocked(translateBatchViaPort).mockImplementation(async texts => texts.map(text => `译:${text}`));
+    const session = new ContentSession(config({
+      siteContentRule: { host: location.hostname, content: ['.prose'], ignore: ['.skip'] },
+    }));
+    try {
+      const start = session.start();
+      await vi.advanceTimersByTimeAsync(1800);
+      expect((await start).count).toBe(1);
+      expect(document.querySelectorAll('.tap-translate-target')).toHaveLength(1);
+
+      document.querySelector('main')!.innerHTML = '<p id="fallback">Unadapted page paragraph.</p><p class="skip">Keep original.</p><button>Save settings.</button>';
+      await vi.advanceTimersByTimeAsync(1800);
+      expect(document.querySelector('#fallback .tap-translate-target')?.textContent).toBe('译:Unadapted page paragraph.');
+      expect(document.querySelectorAll('.tap-translate-target')).toHaveLength(1);
+
+      document.querySelector('main')!.insertAdjacentHTML('beforeend', '<p id="added">Later page paragraph.</p>');
+      await vi.advanceTimersByTimeAsync(1800);
+      expect(document.querySelector('#added .tap-translate-target')?.textContent).toBe('译:Later page paragraph.');
+      expect(vi.mocked(translateBatchViaPort).mock.calls.map(([texts]) => texts)).toEqual([
+        ['Adapted page paragraph.'], ['Unadapted page paragraph.'], ['Later page paragraph.'],
+      ]);
+    } finally {
+      session.dispose('restore');
+    }
+  });
+
   it('a new content revision cancels old requests, restores DOM and installs a fresh policy', async () => {
     vi.useFakeTimers();
     document.body.innerHTML = '<main><p class="old">Old article sentence.</p><p class="next">New article sentence.</p></main>';

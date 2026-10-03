@@ -65,7 +65,7 @@ export interface SiteRule {
 
 export interface SiteContentRule {
   host: string;
-  /** Missing inherits; [] explicitly disables content collection. */
+  /** Missing inherits; unmatched pages use generic collection; [] disables it. */
   content?: string[];
   /** Missing inherits; [] removes only site-specific exclusions. */
   ignore?: string[];
