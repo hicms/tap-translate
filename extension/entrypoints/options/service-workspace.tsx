@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
-import { Check, Input, Select } from '../../ui/fields';
+import { Check, Input, Select, FormDisabled, focusField } from '../../ui/fields';
 import { Dialog } from '../../ui/dialog';
 import { EditorTabs } from '../../ui/editor-tabs';
 import { ProviderPicker } from '../../ui/provider-picker';
@@ -39,6 +39,8 @@ export function ServiceWorkspace({
 }) {
   const { t } = useLocale();
   const [adding, setAdding] = useState(false);
+  const [candidate, setCandidate] = useState<ProviderPresetId>('local-api');
+  const locked = useContext(FormDisabled);
   const provider = draft.providers.find((item) => item.id === selection.providerId)!;
   const model = provider.models.find((item) => item.id === selection.modelId)!;
   const update = (next: ProviderDraft) =>
@@ -47,8 +49,11 @@ export function ServiceWorkspace({
       draft.activeProviderId,
     );
   const changeModel = (next: ModelDraft) =>
-    update({ ...provider, models: provider.models.map((item) => (item.id === next.id ? next : item)) });
-  const focus = (id: string) => requestAnimationFrame(() => document.getElementById(id)?.focus());
+    update({
+      ...provider,
+      models: provider.models.map((item) => (item.id === next.id ? next : item)),
+    });
+  const focus = (id: string) => requestAnimationFrame(() => focusField(id));
   function addProvider(id: ProviderPresetId) {
     const preset = getProviderPreset(id);
     const modelId = crypto.randomUUID();
@@ -87,7 +92,11 @@ export function ServiceWorkspace({
     onChange(
       draft.providers.map((item) =>
         item.id === provider.id
-          ? { ...provider, models: [...provider.models, next], activeModelId: next.id }
+          ? {
+              ...provider,
+              models: [...provider.models, next],
+              activeModelId: next.id,
+            }
           : item,
       ),
       provider.id,
@@ -116,7 +125,14 @@ export function ServiceWorkspace({
           <h2 id="section-connection-title">{t('translationServices')}</h2>
           <p className="hint">{t('minimalServicesHint')}</p>
         </div>
-        <Button id="addProviderBtn" label={t('addProvider')} onClick={() => setAdding(true)} />
+        <Button
+          id="addProviderBtn"
+          label={t('addProvider')}
+          onClick={() => {
+            setCandidate('local-api');
+            setAdding(true);
+          }}
+        />
       </div>
       <div id="serviceWorkspace" className={`settings-workspace ${editing ? 'is-editing' : ''}`}>
         <aside className="workspace-sidebar">
@@ -179,21 +195,23 @@ export function ServiceWorkspace({
                 hideLabel
                 label={t('currentModel')}
                 value={JSON.stringify([provider.id, model.id])}
-                onChange={(event) => {
-                  const [providerId, modelId] = JSON.parse(event.target.value) as [string, string];
+                onChange={(value) => {
+                  const [providerId, modelId] = JSON.parse(value) as [string, string];
                   onSelect({ providerId, modelId });
                 }}
-              >
-                {draft.providers.map((item) => (
-                  <optgroup key={item.id} label={item.name}>
-                    {item.models.map((entry) => (
-                      <option key={entry.id} value={JSON.stringify([item.id, entry.id])}>
-                        {item.name} · {entry.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </Select>
+                options={[
+                  ...draft.providers.map((item) => ({
+                    type: 'section' as const,
+                    title: item.name,
+                    options: [
+                      ...item.models.map((entry) => ({
+                        value: JSON.stringify([item.id, entry.id]),
+                        label: item.name + '·' + entry.name,
+                      })),
+                    ],
+                  })),
+                ]}
+              />
             </div>
           </header>
           <EditorTabs
@@ -217,7 +235,7 @@ export function ServiceWorkspace({
                 autoComplete="off"
                 placeholder="sk-..."
                 value={provider.apiKey}
-                onChange={(event) => update({ ...provider, apiKey: event.target.value })}
+                onChange={(value) => update({ ...provider, apiKey: value })}
               />
               <p id="apiKeyHint" className="hint" hidden={provider.connectionMode !== 'proxy'}>
                 {t('apiKeyProxyHint')}
@@ -228,7 +246,7 @@ export function ServiceWorkspace({
                 required
                 maxLength={200}
                 value={model.name}
-                onChange={(event) => changeModel({ ...model, name: event.target.value })}
+                onChange={(value) => changeModel({ ...model, name: value })}
               />
             </section>
             <section
@@ -244,22 +262,23 @@ export function ServiceWorkspace({
                   required
                   maxLength={100}
                   value={provider.name}
-                  onChange={(event) => update({ ...provider, name: event.target.value })}
+                  onChange={(value) => update({ ...provider, name: value })}
                 />
                 <Select
                   id="connectionMode"
                   label={t('connectionMode')}
                   value={provider.connectionMode}
-                  onChange={(event) =>
+                  onChange={(value) =>
                     update({
                       ...provider,
-                      connectionMode: event.target.value as ProviderDraft['connectionMode'],
+                      connectionMode: value as ProviderDraft['connectionMode'],
                     })
                   }
-                >
-                  <option value="direct">{t('directApi')}</option>
-                  <option value="proxy">{t('connectionModeProxy')}</option>
-                </Select>
+                  options={[
+                    { value: 'direct', label: t('directApi') },
+                    { value: 'proxy', label: t('connectionModeProxy') },
+                  ]}
+                />
               </div>
               <Input
                 id="apiBase"
@@ -267,7 +286,7 @@ export function ServiceWorkspace({
                 type="url"
                 required
                 value={provider.apiBase}
-                onChange={(event) => update({ ...provider, apiBase: event.target.value })}
+                onChange={(value) => update({ ...provider, apiBase: value })}
               />
               <Check
                 id="rememberApiKey"
@@ -283,8 +302,15 @@ export function ServiceWorkspace({
                   id="addHeaderBtn"
                   label={t('addHeader')}
                   onClick={() => {
-                    const header = { id: crypto.randomUUID(), name: '', value: '' };
-                    update({ ...provider, headers: [...provider.headers, header] });
+                    const header = {
+                      id: crypto.randomUUID(),
+                      name: '',
+                      value: '',
+                    };
+                    update({
+                      ...provider,
+                      headers: [...provider.headers, header],
+                    });
                     focus(`header-${header.id}`);
                   }}
                 />
@@ -297,11 +323,11 @@ export function ServiceWorkspace({
                         label={t('headerName')}
                         value={row.name}
                         autoComplete="off"
-                        onChange={(event) =>
+                        onChange={(value) =>
                           update({
                             ...provider,
                             headers: provider.headers.map((item) =>
-                              item.id === row.id ? { ...item, name: event.target.value } : item,
+                              item.id === row.id ? { ...item, name: value } : item,
                             ),
                           })
                         }
@@ -311,11 +337,11 @@ export function ServiceWorkspace({
                         label={t('headerValue')}
                         value={row.value}
                         autoComplete="off"
-                        onChange={(event) =>
+                        onChange={(value) =>
                           update({
                             ...provider,
                             headers: provider.headers.map((item) =>
-                              item.id === row.id ? { ...item, value: event.target.value } : item,
+                              item.id === row.id ? { ...item, value: value } : item,
                             ),
                           })
                         }
@@ -380,13 +406,23 @@ export function ServiceWorkspace({
         onClose={() => setAdding(false)}
       >
         <p className="hint">{t('addProviderHint')}</p>
-        <ProviderPicker inline selected="custom" onSelect={addProvider} />
-        <Button
-          id="closeProviderDialogBtn"
-          variant="ghost"
-          label={t('close')}
-          onClick={() => setAdding(false)}
-        />
+        <ProviderPicker inline selected={candidate} onSelect={setCandidate} />
+        <div className="actions">
+          <Button
+            id="closeProviderDialogBtn"
+            variant="ghost"
+            label={t('close')}
+            isDisabled={locked}
+            onClick={() => setAdding(false)}
+          />
+          <Button
+            id="confirmProviderBtn"
+            variant="primary"
+            label={t('addProvider')}
+            isDisabled={locked}
+            onClick={() => addProvider(candidate)}
+          />
+        </div>
       </Dialog>
     </>
   );

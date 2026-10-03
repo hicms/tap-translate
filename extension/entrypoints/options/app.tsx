@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '@astryxdesign/core/Button';
-import { Brand, Select } from '../../ui/fields';
+import { Brand, Select, FormDisabled, focusField } from '../../ui/fields';
 import { LocaleProvider, languageKey, useLocale } from '../../ui/locale';
 import {
   SUPPORTED_TARGET_LANGS,
@@ -163,7 +163,8 @@ function OptionsContent({
     });
     for (let parent = element.parentElement; parent; parent = parent.parentElement)
       if (parent instanceof HTMLDetailsElement) parent.open = true;
-    element.focus();
+    if (element.id) focusField(element.id);
+    else element.focus();
     element.scrollIntoView({ block: 'center' });
   }
   function handleError(failure: unknown) {
@@ -270,7 +271,10 @@ function OptionsContent({
         setTestStatus({ text: t('connPermissionRequired'), error: true });
         return;
       }
-      const result = await testConnection({ ...connection, targetLang: draft.targetLang });
+      const result = await testConnection({
+        ...connection,
+        targetLang: draft.targetLang,
+      });
       setTestStatus({
         text: result.ok
           ? result.latencyMs != null
@@ -288,207 +292,210 @@ function OptionsContent({
     }
   }
   return (
-    <div className="page">
-      <header className="page-header">
-        <Brand />
-      </header>
-      <div className="settings-layout">
-        <nav
-          className="section-nav"
-          aria-label={t('optionsNavLabel')}
-          onKeyDown={(event) => {
-            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key))
-              return;
-            event.preventDefault();
-            const index = sections.indexOf(section);
-            const next =
-              event.key === 'Home'
-                ? 0
-                : event.key === 'End'
-                  ? sections.length - 1
-                  : (index + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1) + sections.length) %
-                    sections.length;
-            navigate(sections[next]!);
-            event.currentTarget.querySelectorAll<HTMLAnchorElement>('a')[next]?.focus();
-          }}
-        >
-          {sections.map((value) => (
-            <a
-              key={value}
-              href={`#section-${value}`}
-              data-section-nav={`section-${value}`}
-              className={section === value ? 'is-active' : ''}
-              aria-current={section === value ? 'page' : undefined}
-              onClick={(event) => {
-                event.preventDefault();
-                navigate(value);
-              }}
-            >
-              {t(sectionLabels[value])}
-            </a>
-          ))}
-        </nav>
-        <main>
-          <form
-            id="optionsForm"
-            className="page-body"
-            noValidate
-            inert={busy}
-            aria-busy={busy || undefined}
-            onSubmit={(event) => {
+    <FormDisabled value={busy}>
+      <div className="page">
+        <header className="page-header">
+          <Brand />
+        </header>
+        <div className="settings-layout">
+          <nav
+            className="section-nav"
+            aria-label={t('optionsNavLabel')}
+            onKeyDown={(event) => {
+              if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key))
+                return;
               event.preventDefault();
-              if (busyRef.current) return;
-              // Validate all saved drafts first; native validity covers the visible
-              // editor without losing errors from a different provider/site.
-              void save();
+              const index = sections.indexOf(section);
+              const next =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? sections.length - 1
+                    : (index + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1) + sections.length) %
+                      sections.length;
+              navigate(sections[next]!);
+              event.currentTarget.querySelectorAll<HTMLAnchorElement>('a')[next]?.focus();
             }}
-            onInvalidCapture={(event) => reveal(event.target as HTMLElement)}
           >
-            <section
-              id="section-connection"
-              className="settings-section"
-              hidden={section !== 'connection'}
-              aria-labelledby="section-connection-title"
-            >
-              <ServiceWorkspace
-                draft={draft}
-                selection={selection}
-                onChange={(providers, activeProviderId) => edit({ providers, activeProviderId })}
-                onSelect={selectService}
-                tab={serviceTab}
-                setTab={setServiceTab}
-                editing={serviceEditing}
-                setEditing={setServiceEditing}
-                onTest={() => {
-                  void test();
+            {sections.map((value) => (
+              <a
+                key={value}
+                href={`#section-${value}`}
+                data-section-nav={`section-${value}`}
+                className={section === value ? 'is-active' : ''}
+                aria-current={section === value ? 'page' : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigate(value);
                 }}
-                testStatus={testStatus}
-                testing={testing}
-              />
-            </section>
-            <section
-              id="section-reading"
-              className="settings-section"
-              hidden={section !== 'reading'}
-              aria-labelledby="section-reading-title"
-            >
-              <div className="section-head">
-                <h2 id="section-reading-title">{t('sectionReading')}</h2>
-                <p className="hint">{t('minimalReadingHint')}</p>
-              </div>
-              <Select
-                id="uiLocale"
-                label={t('uiLocale')}
-                value={draft.uiLocale}
-                onChange={(event) => edit({ uiLocale: event.target.value as Settings['uiLocale'] })}
               >
-                {SUPPORTED_UI_LOCALES.map((code) => (
-                  <option key={code} value={code}>
-                    {t(languageKey(code, 'ui'))}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                id="targetLang"
-                label={t('targetLanguage')}
-                value={draft.targetLang}
-                onChange={(event) => edit({ targetLang: event.target.value as Settings['targetLang'] })}
-              >
-                {SUPPORTED_TARGET_LANGS.map((code) => (
-                  <option key={code} value={code}>
-                    {t(languageKey(code))}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                id="mode"
-                label={t('translationMode')}
-                hint={t('translationModeHint')}
-                value={draft.mode}
-                onChange={(event) => edit({ mode: event.target.value as Settings['mode'] })}
-              >
-                <option value="bilingual">{t('modeBilingual')}</option>
-                <option value="replace">{t('modeReplace')}</option>
-              </Select>
-            </section>
-            <section
-              id="section-sites"
-              className="settings-section"
-              hidden={section !== 'sites'}
-              aria-labelledby="section-sites-title"
+                {t(sectionLabels[value])}
+              </a>
+            ))}
+          </nav>
+          <main>
+            <form
+              id="optionsForm"
+              className="page-body"
+              noValidate
+              inert={busy}
+              aria-busy={busy || undefined}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (busyRef.current) return;
+                // Validate all saved drafts first; native validity covers the visible
+                // editor without losing errors from a different provider/site.
+                void save();
+              }}
+              onInvalidCapture={(event) => reveal(event.target as HTMLElement)}
             >
-              <SiteWorkspace
-                sites={draft.sites}
-                onChange={(sites) => edit({ sites })}
-                selectedId={siteId}
-                onSelect={setSiteId}
-                tabs={siteTabs}
-                onTab={(id, tab) => setSiteTabs((value) => ({ ...value, [id]: tab }))}
-                editing={siteEditing}
-                setEditing={setSiteEditing}
-                error={error}
-              />
-            </section>
-            <section
-              id="section-data"
-              className="settings-section"
-              hidden={section !== 'data'}
-              aria-labelledby="section-data-title"
-            >
-              <DataPanel
-                report={report}
-                onImport={async (patch) => {
-                  if (busyRef.current) return;
-                  busyRef.current = true;
-                  setBusy(true);
-                  try {
-                    await persist(patch);
-                    report(t('imported'));
-                  } finally {
-                    busyRef.current = false;
-                    setBusy(false);
-                  }
-                }}
-              />
-            </section>
-            <footer id="stickyActions" className="sticky-actions">
-              <div className="save-messages">
-                <span
-                  id="saveStatus"
-                  className={`save-status ${status.error ? 'is-error' : ''}`}
-                  role="status"
-                >
-                  {status.text}
-                </span>
-                <p id="saveTiming" className="hint" hidden={section !== 'sites'}>
-                  {t('workspaceSaveHint')}
-                </p>
-              </div>
-              <Button
-                id="discardBtn"
-                variant="ghost"
-                label={t('discardChanges')}
-                isDisabled={!dirty || busy}
-                onClick={() => {
-                  void getSettings()
-                    .then((saved) => {
-                      replace(saved);
-                      report(t('discarded'));
-                    })
-                    .catch((failure) => report(handleError(failure), true));
-                }}
-              />
-              <Button
-                id="saveBtn"
-                type="submit"
-                variant="primary"
-                label={t('save')}
-                isDisabled={!dirty || busy}
-              />
-            </footer>
-          </form>
-        </main>
+              <section
+                id="section-connection"
+                className="settings-section"
+                hidden={section !== 'connection'}
+                aria-labelledby="section-connection-title"
+              >
+                <ServiceWorkspace
+                  draft={draft}
+                  selection={selection}
+                  onChange={(providers, activeProviderId) => edit({ providers, activeProviderId })}
+                  onSelect={selectService}
+                  tab={serviceTab}
+                  setTab={setServiceTab}
+                  editing={serviceEditing}
+                  setEditing={setServiceEditing}
+                  onTest={() => {
+                    void test();
+                  }}
+                  testStatus={testStatus}
+                  testing={testing}
+                />
+              </section>
+              <section
+                id="section-reading"
+                className="settings-section"
+                hidden={section !== 'reading'}
+                aria-labelledby="section-reading-title"
+              >
+                <div className="section-head">
+                  <h2 id="section-reading-title">{t('sectionReading')}</h2>
+                  <p className="hint">{t('minimalReadingHint')}</p>
+                </div>
+                <Select
+                  id="uiLocale"
+                  label={t('uiLocale')}
+                  value={draft.uiLocale}
+                  onChange={(value) => edit({ uiLocale: value as Settings['uiLocale'] })}
+                  options={[
+                    ...SUPPORTED_UI_LOCALES.map((code) => ({
+                      value: code,
+                      label: t(languageKey(code, 'ui')),
+                    })),
+                  ]}
+                />
+                <Select
+                  id="targetLang"
+                  label={t('targetLanguage')}
+                  value={draft.targetLang}
+                  onChange={(value) => edit({ targetLang: value as Settings['targetLang'] })}
+                  options={[
+                    ...SUPPORTED_TARGET_LANGS.map((code) => ({
+                      value: code,
+                      label: t(languageKey(code)),
+                    })),
+                  ]}
+                />
+                <Select
+                  id="mode"
+                  label={t('translationMode')}
+                  hint={t('translationModeHint')}
+                  value={draft.mode}
+                  onChange={(value) => edit({ mode: value as Settings['mode'] })}
+                  options={[
+                    { value: 'bilingual', label: t('modeBilingual') },
+                    { value: 'replace', label: t('modeReplace') },
+                  ]}
+                />
+              </section>
+              <section
+                id="section-sites"
+                className="settings-section"
+                hidden={section !== 'sites'}
+                aria-labelledby="section-sites-title"
+              >
+                <SiteWorkspace
+                  sites={draft.sites}
+                  onChange={(sites) => edit({ sites })}
+                  selectedId={siteId}
+                  onSelect={setSiteId}
+                  tabs={siteTabs}
+                  onTab={(id, tab) => setSiteTabs((value) => ({ ...value, [id]: tab }))}
+                  editing={siteEditing}
+                  setEditing={setSiteEditing}
+                  error={error}
+                />
+              </section>
+              <section
+                id="section-data"
+                className="settings-section"
+                hidden={section !== 'data'}
+                aria-labelledby="section-data-title"
+              >
+                <DataPanel
+                  report={report}
+                  onImport={async (patch) => {
+                    if (busyRef.current) return;
+                    busyRef.current = true;
+                    setBusy(true);
+                    try {
+                      await persist(patch);
+                      report(t('imported'));
+                    } finally {
+                      busyRef.current = false;
+                      setBusy(false);
+                    }
+                  }}
+                />
+              </section>
+              <footer id="stickyActions" className="sticky-actions">
+                <div className="save-messages">
+                  <span
+                    id="saveStatus"
+                    className={`save-status ${status.error ? 'is-error' : ''}`}
+                    role="status"
+                  >
+                    {status.text}
+                  </span>
+                  <p id="saveTiming" className="hint" hidden={section !== 'sites'}>
+                    {t('workspaceSaveHint')}
+                  </p>
+                </div>
+                <Button
+                  id="discardBtn"
+                  variant="ghost"
+                  label={t('discardChanges')}
+                  isDisabled={!dirty || busy}
+                  onClick={() => {
+                    void getSettings()
+                      .then((saved) => {
+                        replace(saved);
+                        report(t('discarded'));
+                      })
+                      .catch((failure) => report(handleError(failure), true));
+                  }}
+                />
+                <Button
+                  id="saveBtn"
+                  type="submit"
+                  variant="primary"
+                  label={t('save')}
+                  isDisabled={!dirty || busy}
+                />
+              </footer>
+            </form>
+          </main>
+        </div>
       </div>
-    </div>
+    </FormDisabled>
   );
 }

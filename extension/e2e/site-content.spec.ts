@@ -1,3 +1,4 @@
+import { selectOption, expectSelection } from './helpers/astryx-controls';
 import { extTest as test, expectExt as expect } from './helpers/ext-fixture';
 import { startMockServer } from './helpers/mock-server';
 import { getTabId, getTabStatus, inspectSelectionOverlay, seedSettings, translateSelectionInTab, translateTab } from './helpers/ext-control';
@@ -24,7 +25,7 @@ test('site content editor: browse, validate, inspect, save, restart and restore'
     await expect(github.locator('[data-selectors="content"]')).toBeDisabled();
     await expect(options.locator('#saveBtn')).toBeDisabled();
     await expect.poll(() => options.evaluate(async () => (await chrome.storage.local.get('siteContentRules')).siteContentRules ?? [])).toEqual([]);
-    await github.locator('[data-rule-mode="content"]').selectOption('custom');
+    await selectOption(github.locator('[data-rule-mode="content"]'), 'custom');
     await expect(github.locator('[data-selectors="content"]')).toBeEnabled();
     await expect(github.locator('[data-selectors="content"]')).toHaveValue(/markdown-body/);
     await github.getByRole('button', { name: 'Restore field default', exact: true }).first().click();
@@ -35,7 +36,7 @@ test('site content editor: browse, validate, inspect, save, restart and restore'
     const card = options.locator('.site-card:not([data-builtin])').last();
     await card.locator('[data-field="host"]').fill('127.0.0.1');
     await card.locator('[data-editor-tab="content"]').click();
-    await card.locator('[data-rule-mode="content"]').selectOption('custom');
+    await selectOption(card.locator('[data-rule-mode="content"]'), 'custom');
     await card.locator('[data-selectors="content"]').fill('#p1\n[');
     await options.locator('#saveBtn').click();
     await expect(card.locator('.content-error')).toHaveText(/Content selectors, line 2/);
@@ -102,17 +103,17 @@ test('site content editor: browse, validate, inspect, save, restart and restore'
     await expect(page.locator('#p2 .tap-translate-target')).toBeVisible();
 
     await edit.locator('[data-editor-tab="preferences"]').click();
-    await edit.locator('[data-field="policy"]').selectOption('never');
+    await selectOption(edit.locator('[data-field="policy"]'), 'never');
     await options.locator('#saveBtn').click();
     await expect(options.locator('#saveStatus')).toContainText('Saved');
     expect((await translateTab(sw, tabId)).success).toBe(false);
     await expect(page.locator('.tap-translate-target')).toHaveCount(0);
-    await edit.locator('[data-field="policy"]').selectOption('auto');
-    await edit.locator('[data-field="mode"]').selectOption('replace');
-    await edit.locator('[data-field="targetLang"]').selectOption('fr');
+    await selectOption(edit.locator('[data-field="policy"]'), 'auto');
+    await selectOption(edit.locator('[data-field="mode"]'), 'replace');
+    await selectOption(edit.locator('[data-field="targetLang"]'), 'fr');
     await edit.locator('[data-editor-tab="content"]').click();
     await edit.getByRole('button', { name: 'Restore all content defaults', exact: true }).click();
-    await expect(edit.locator('[data-rule-mode="content"]')).toHaveValue('inherit');
+    await expectSelection(edit.locator('[data-rule-mode="content"]'), 'inherit');
     await options.locator('#saveBtn').click();
     await expect(options.locator('#saveStatus')).toContainText('Saved');
     expect(await options.evaluate(async () => (await chrome.storage.local.get('siteContentRules')).siteContentRules)).toEqual([]);
@@ -184,7 +185,7 @@ test('a draft check requests only the ungranted HTTPS host and retains the draft
   const card = options.locator('.site-card:not([data-builtin])');
   await card.locator('[data-field="host"]').fill('rules.example.test');
   await card.locator('[data-editor-tab="content"]').click();
-  await card.locator('[data-rule-mode="content"]').selectOption('custom');
+  await selectOption(card.locator('[data-rule-mode="content"]'), 'custom');
   await card.locator('[data-selectors="content"]').fill('p');
   await options.evaluate(() => {
     // Deterministic denial at the native permission boundary; no external grant.

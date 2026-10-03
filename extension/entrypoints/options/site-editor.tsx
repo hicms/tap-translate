@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
-import { Input, Select, Textarea } from '../../ui/fields';
+import { Input, Select, Textarea, focusField } from '../../ui/fields';
 import { EditorTabs } from '../../ui/editor-tabs';
 import { languageKey, useLocale } from '../../ui/locale';
 import { SUPPORTED_TARGET_LANGS } from '../../lib/settings/schema';
@@ -108,16 +108,20 @@ function ContentEditor({
             label={`${t(field === 'content' ? 'contentSelectors' : 'ignoreSelectors')}: ${t('contentSource')}`}
             data-rule-mode={field}
             value={site[field] === undefined ? 'inherit' : 'custom'}
-            onChange={(event) =>
+            onChange={(value) =>
               onChange({
                 ...site,
-                [field]: event.target.value === 'inherit' ? undefined : (profile?.[field].join('\n') ?? ''),
+                [field]: value === 'inherit' ? undefined : (profile?.[field].join('\n') ?? ''),
               })
             }
-          >
-            <option value="inherit">{t(profile ? 'contentInheritBuiltin' : 'contentInheritGeneric')}</option>
-            <option value="custom">{t('contentCustom')}</option>
-          </Select>
+            options={[
+              {
+                value: 'inherit',
+                label: t(profile ? 'contentInheritBuiltin' : 'contentInheritGeneric'),
+              },
+              { value: 'custom', label: t('contentCustom') },
+            ]}
+          />
           <Textarea
             id={`site-${site.id}-${field}`}
             data-selectors={field}
@@ -129,7 +133,7 @@ function ContentEditor({
             aria-invalid={
               error?.location.siteId === site.id && error.location.field === field ? true : undefined
             }
-            onChange={(event) => onChange({ ...site, [field]: event.target.value })}
+            onChange={(value) => onChange({ ...site, [field]: value })}
           />
           <div className="content-field-caption">
             <p className="hint">{t(field === 'content' ? 'contentEmptyHint' : 'ignoreEmptyHint')}</p>
@@ -216,7 +220,7 @@ export function SiteWorkspace({
             const site = newSite();
             onChange([...sites, site]);
             select(site.id);
-            requestAnimationFrame(() => document.getElementById(`site-${site.id}-host`)?.focus());
+            requestAnimationFrame(() => focusField(`site-${site.id}-host`));
           }}
         />
       </div>
@@ -230,7 +234,7 @@ export function SiteWorkspace({
               hideLabel
               placeholder={t('workspaceSearchSites')}
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(value) => setSearch(value)}
             />
           </div>
           <div id="siteList" className="workspace-list" aria-label={t('sectionSites')}>
@@ -277,6 +281,7 @@ export function SiteWorkspace({
                 key={site.id}
                 className="site-card"
                 data-site-id={site.id}
+                data-host={site.host}
                 data-builtin={profile ? 'true' : undefined}
                 hidden={site.id !== selectedId}
               >
@@ -294,27 +299,24 @@ export function SiteWorkspace({
                   />
                   {profile ? (
                     <>
-                      <input type="hidden" data-field="host" value={site.host} readOnly />
                       <Select
                         id={`site-${site.id}-host`}
                         className="site-domain-select"
                         label={t('siteHost')}
                         value={site.host}
-                        onChange={(event) => {
-                          const next = sites.find((item) => item.host === event.target.value)!;
+                        onChange={(value) => {
+                          const next = sites.find((item) => item.host === value)!;
                           onTab(next.id, tab);
                           select(next.id);
-                          requestAnimationFrame(() =>
-                            document.getElementById(`site-${next.id}-host`)?.focus(),
-                          );
+                          requestAnimationFrame(() => focusField(`site-${next.id}-host`));
                         }}
-                      >
-                        {profile.hosts.map((host) => (
-                          <option key={host} value={host}>
-                            {host}
-                          </option>
-                        ))}
-                      </Select>
+                        options={[
+                          ...profile.hosts.map((host) => ({
+                            value: host,
+                            label: host,
+                          })),
+                        ]}
+                      />
                     </>
                   ) : (
                     <Input
@@ -329,7 +331,7 @@ export function SiteWorkspace({
                           ? true
                           : undefined
                       }
-                      onChange={(event) => update({ ...site, host: event.target.value })}
+                      onChange={(value) => update({ ...site, host: value })}
                     />
                   )}
                   <p className="hint">{t('siteHostHint')}</p>
@@ -366,43 +368,49 @@ export function SiteWorkspace({
                         label={t('sitePolicy')}
                         data-field="policy"
                         value={site.policy}
-                        onChange={(event) =>
-                          update({ ...site, policy: event.target.value as SiteDraft['policy'] })
+                        onChange={(value) =>
+                          update({
+                            ...site,
+                            policy: value as SiteDraft['policy'],
+                          })
                         }
-                      >
-                        <option value="global">{t('sitePolicyGlobal')}</option>
-                        <option value="auto">{t('sitePolicyAuto')}</option>
-                        <option value="never">{t('sitePolicyNever')}</option>
-                      </Select>
+                        options={[
+                          { value: 'global', label: t('sitePolicyGlobal') },
+                          { value: 'auto', label: t('sitePolicyAuto') },
+                          { value: 'never', label: t('sitePolicyNever') },
+                        ]}
+                      />
                       <Select
                         label={t('translationMode')}
                         data-field="mode"
                         value={site.mode}
                         disabled={site.policy === 'never'}
-                        onChange={(event) =>
-                          update({ ...site, mode: event.target.value as SiteDraft['mode'] })
-                        }
-                      >
-                        <option value="">{t('siteUseGlobal')}</option>
-                        <option value="bilingual">{t('modeBilingual')}</option>
-                        <option value="replace">{t('modeReplace')}</option>
-                      </Select>
+                        onChange={(value) => update({ ...site, mode: value as SiteDraft['mode'] })}
+                        options={[
+                          { value: '', label: t('siteUseGlobal') },
+                          { value: 'bilingual', label: t('modeBilingual') },
+                          { value: 'replace', label: t('modeReplace') },
+                        ]}
+                      />
                       <Select
                         label={t('targetLanguage')}
                         data-field="targetLang"
                         value={site.targetLang}
                         disabled={site.policy === 'never'}
-                        onChange={(event) =>
-                          update({ ...site, targetLang: event.target.value as SiteDraft['targetLang'] })
+                        onChange={(value) =>
+                          update({
+                            ...site,
+                            targetLang: value as SiteDraft['targetLang'],
+                          })
                         }
-                      >
-                        <option value="">{t('siteUseGlobal')}</option>
-                        {SUPPORTED_TARGET_LANGS.map((code) => (
-                          <option key={code} value={code}>
-                            {t(languageKey(code))}
-                          </option>
-                        ))}
-                      </Select>
+                        options={[
+                          { value: '', label: t('siteUseGlobal') },
+                          ...SUPPORTED_TARGET_LANGS.map((code) => ({
+                            value: code,
+                            label: t(languageKey(code)),
+                          })),
+                        ]}
+                      />
                     </div>
                   </section>
                   <section

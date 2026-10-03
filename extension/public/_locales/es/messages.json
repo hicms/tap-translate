@@ -1,4 +1,5 @@
 {
+  "errNumericDraft": {"message": "Introduce un número decimal en pasos de 0,01, o un entero para los límites de tokens y los lotes. Deja vacío el límite de tokens para el modo automático."},
   "extName": {"message": "Traductor TapTranslate"},
   "extDescription": {"message": "Traducción bilingüe o de sustitución de páginas con cualquier API compatible con OpenAI."},
   "cmdToggleTranslate": {"message": "Traducir / restaurar la página actual"},

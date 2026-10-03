@@ -1,3 +1,4 @@
+import { selectOption } from './astryx-controls';
 import { expect, type Page } from '@playwright/test';
 
 export async function settingsTab(page: Page, section: 'connection' | 'reading' | 'sites' | 'data'): Promise<void> {
@@ -7,7 +8,7 @@ export async function settingsTab(page: Page, section: 'connection' | 'reading' 
 
 export async function optionsLocale(page: Page, locale: string): Promise<void> {
   await settingsTab(page, 'reading');
-  await page.locator('#uiLocale').selectOption(locale);
+  await selectOption(page.locator('#uiLocale'), locale);
   await expect(page.locator('html')).toHaveAttribute('lang', locale);
   await settingsTab(page, 'connection');
 }

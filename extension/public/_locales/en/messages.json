@@ -1,4 +1,5 @@
 {
+  "errNumericDraft": {"message": "Enter a decimal number using steps of 0.01, or a whole number for token limits and batch counts. Leave the token limit blank for automatic."},
   "extName": {
     "message": "TapTranslate"
   },

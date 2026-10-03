@@ -1,3 +1,4 @@
+import { selectOption, expectSelection } from './helpers/astryx-controls';
 import { extTest as test, expectExt as expect } from './helpers/ext-fixture';
 import { getTabId, seedSettings } from './helpers/ext-control';
 import { startMockServer } from './helpers/mock-server';
@@ -35,9 +36,9 @@ test('React popup translates, stops pending work, restores and persists site per
     await popup.evaluate(() => {
       chrome.permissions.request = async () => false;
     });
-    await popup.locator('#sitePolicy').selectOption('auto');
+    await selectOption(popup.locator('#sitePolicy'), 'auto');
     await expect(popup.locator('#sitePolicy')).toBeEnabled();
-    await expect(popup.locator('#sitePolicy')).toHaveValue('global');
+    await expectSelection(popup.locator('#sitePolicy'), 'global');
     expect(await sw.evaluate(async id => (await chrome.storage.session.get(`tapTranslatePendingSiteAuto:${id}`))[`tapTranslatePendingSiteAuto:${id}`], tabId)).toBeUndefined();
     await popup.evaluate(id => {
       chrome.permissions.request = async () => {
@@ -47,7 +48,7 @@ test('React popup translates, stops pending work, restores and persists site per
         return true;
       };
     }, tabId);
-    await popup.locator('#sitePolicy').selectOption('auto');
+    await selectOption(popup.locator('#sitePolicy'), 'auto');
     await expect.poll(() => sw.evaluate(async () => (await chrome.storage.sync.get('siteRules')).siteRules)).toContainEqual({ host: '127.0.0.1', auto: true });
     expect(errors).toEqual([]);
   } finally { await mock.close(); }
@@ -59,7 +60,7 @@ test('React onboarding tests connection and saves a session-only key', async ({ 
     await seedSettings(extContext, extensionId, { apiBase: mock.apiBase, apiKey: '', uiLocale: 'en' });
     const page = await extContext.newPage();
     await page.goto(`chrome-extension://${extensionId}/onboarding.html`);
-    await page.locator('#apiKey').fill('onboarding-session-secret');
+    await page.locator('#apiKey input').fill('onboarding-session-secret');
     await page.locator('#rememberKey input').uncheck();
     await page.locator('#testBtn').click();
     await expect(page.locator('#testStatus')).toContainText('Connected');
@@ -71,7 +72,7 @@ test('React onboarding tests connection and saves a session-only key', async ({ 
     expect(JSON.stringify(stored.session)).toContain('onboarding-session-secret');
     const options = await extContext.newPage();
     await options.goto(`chrome-extension://${extensionId}/options.html`);
-    await expect(options.locator('#apiKey')).toHaveValue('onboarding-session-secret');
+    await expect(options.locator('#apiKey input')).toHaveValue('onboarding-session-secret');
   } finally { await mock.close(); }
 });
 
@@ -94,19 +95,23 @@ test('React data controls preview imports and export private data only after opt
   expect(publicExport).not.toContain('export-test-header');
   await page.locator('#includeSecrets input').check();
   await page.locator('#includeCustomHeaders input').check();
-  let confirmations = 0;
-  page.on('dialog', async dialog => { confirmations++; await dialog.accept(); });
-  const privateExport = await download();
+  await page.locator('#exportBtn').click();
+  await expect(page.locator('#dataConfirmDialog')).toContainText(/API key/i);
+  await expect(page.locator('#dataConfirmDialog')).toContainText('headers');
+  await page.locator('#dataConfirmDialog button[value="cancel"]').click();
+  await page.locator('#exportBtn').click();
+  const privateDownload = page.waitForEvent('download');
+  await page.locator('#dataConfirmDialog button[value="confirm"]').click();
+  const privateExport = await readFile((await (await privateDownload).path())!, 'utf8');
   expect(privateExport).toContain('export-test-secret');
   expect(privateExport).toContain('export-test-header');
-  expect(confirmations).toBe(2);
   const file = { name: 'settings.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ targetLang: 'fr' })) };
-  await page.locator('#importFile').setInputFiles(file);
+  await page.locator('#importFile input[type="file"]').setInputFiles(file);
   await expect(page.locator('#importPreviewDialog')).toBeVisible();
   await expect(page.locator('#importPreviewChanges')).toContainText('Target language');
   await page.locator('#importPreviewDialog button[value="cancel"]').click();
   expect(await sw.evaluate(async () => (await chrome.storage.sync.get('targetLang')).targetLang)).toBe('en');
-  await page.locator('#importFile').setInputFiles(file);
+  await page.locator('#importFile input[type="file"]').setInputFiles(file);
   await page.locator('#importPreviewDialog button[value="confirm"]').click();
   await expect(page.locator('#importPreviewDialog')).toBeHidden();
   await expect.poll(() => sw.evaluate(async () => (await chrome.storage.sync.get('targetLang')).targetLang)).toBe('fr');
@@ -114,7 +119,7 @@ test('React data controls preview imports and export private data only after opt
   const after = await download();
   expect(JSON.parse(after).targetLang).toBe('fr');
   await page.locator('[data-section-nav="section-connection"]').click();
-  await expect(page.locator('#apiKey')).toHaveValue('export-test-secret');
+  await expect(page.locator('#apiKey input')).toHaveValue('export-test-secret');
 });
 
 test('custom site drafts stay editable at built-in domain prefixes and unrelated saves preserve concurrent rules', async ({ extContext, extensionId, sw }) => {
@@ -136,7 +141,7 @@ test('custom site drafts stay editable at built-in domain prefixes and unrelated
   await card.locator('[data-action="remove-site"]').click();
   await sw.evaluate(() => chrome.storage.sync.set({ siteRules: [{ host: 'concurrent.example', disabled: true }] }));
   await page.locator('[data-section-nav="section-reading"]').click();
-  await page.locator('#targetLang').selectOption('fr');
+  await selectOption(page.locator('#targetLang'), 'fr');
   await page.locator('#saveBtn').click();
   await expect(page.locator('#saveStatus')).toContainText('Saved');
   expect(await sw.evaluate(async () => (await chrome.storage.sync.get('siteRules')).siteRules)).toEqual([{ host: 'concurrent.example', disabled: true }]);

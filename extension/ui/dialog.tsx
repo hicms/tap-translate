@@ -1,7 +1,6 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { Dialog as AstryxDialog, DialogHeader } from '@astryxdesign/core/Dialog';
 
-// Native modal lifecycle supplies focus trapping and Escape while React owns
-// its visibility/content. Astryx controls inside inherit the application's theme.
 export function Dialog({
   id,
   title,
@@ -15,24 +14,19 @@ export function Dialog({
   onClose: () => void;
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useLayoutEffect(() => {
-    const dialog = ref.current!;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
   return (
-    <dialog
+    <AstryxDialog
       id={id}
-      ref={ref}
-      aria-labelledby={`${id}-title`}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
+      isOpen={open}
+      onOpenChange={(value) => {
+        if (!value) onClose();
       }}
+      width="min(540px, calc(100vw - 32px))"
+      maxHeight="calc(100dvh - 32px)"
+      className="app-dialog"
     >
-      <h2 id={`${id}-title`}>{title}</h2>
-      {children}
-    </dialog>
+      <DialogHeader title={title} className="app-dialog-header" />
+      <div className="app-dialog-body">{children}</div>
+    </AstryxDialog>
   );
 }

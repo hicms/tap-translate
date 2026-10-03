@@ -1,3 +1,4 @@
+import { selectOption } from './helpers/astryx-controls';
 import { advancedSettings, settingsTab } from './helpers/options-ui';
 import { test, expect } from './fixtures';
 
@@ -28,15 +29,15 @@ test('options: target language change does not flip UI locale', async ({ context
   await expect(options.locator('#uiLocale')).toBeVisible();
   await expect(options.locator('#targetLang')).toBeEnabled();
 
-  await options.locator('#uiLocale').selectOption('en');
+  await selectOption(options.locator('#uiLocale'), 'en');
   // Wait for localizePage to settle on English catalog.
   await expect(options.locator('#saveBtn')).toHaveText(/Save/i);
 
   const before = ((await options.locator('#saveBtn').textContent()) ?? '').trim();
-  await options.locator('#targetLang').selectOption('zh-CN');
+  await selectOption(options.locator('#targetLang'), 'zh-CN');
   await expect.poll(async () => ((await options.locator('#saveBtn').textContent()) ?? '').trim()).toBe(before);
 
-  await options.locator('#uiLocale').selectOption('zh-CN');
+  await selectOption(options.locator('#uiLocale'), 'zh-CN');
   await expect(options.locator('#saveBtn')).toHaveText(/保存/);
 });
 
@@ -62,7 +63,7 @@ test('options re-localizes existing dynamic cards in every UI language', async (
   };
   await settingsTab(options, 'reading');
   for (const [locale, htmlLang] of Object.entries(locales)) {
-    await options.locator('#uiLocale').selectOption(locale);
+    await selectOption(options.locator('#uiLocale'), locale);
     await expect(options.locator('html')).toHaveAttribute('lang', htmlLang);
     await expect(options.locator('#siteRuleRows .site-card label').first()).toHaveText(/.+/);
     await expect(options.locator('#customHeaderRows [data-action="remove-header"]')).toHaveAttribute(

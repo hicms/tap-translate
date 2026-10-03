@@ -73,7 +73,7 @@ tap-translate/
 
 基于 TypeScript + WXT（Manifest V3），界面使用 React 19 + [Astryx](https://github.com/facebook/astryx)，不包含独立后端服务。
 
-- **扩展页面**（`entrypoints/popup`、`options`、`onboarding`）：采用 React 组件，复用 `ui/` 中的 Astryx 控件和主题。设置页独立维护供应商、模型及站点的编辑草稿，校验后仅保存变化字段。
+- **扩展页面**（`entrypoints/popup`、`options`、`onboarding`）：采用 React 组件，文本及数字输入、下拉、多选、单选、文件选择和弹窗均复用 `ui/` 中的 Astryx 控件与主题。不支持 CSS 锚点定位的浏览器使用 Astryx 底部选择面板。设置页独立维护供应商、模型及站点的编辑草稿，校验后仅保存变化字段。
 - **划词浮层**（`lib/overlay`）：在隔离的 ShadowRoot 内挂载 React + Astryx。字体、脚本和样式均来自本地，扩展主题不会改动网页样式。
 - **内容脚本**（`entrypoints/tap-translate.ts`）：每个 frame 独立运行会话；`collector` + `sites` 识别正文，`scheduler` 管理视口队列和重试，`renderer` 展示译文或恢复原文。
 - **扩展后台**（`entrypoints/background.ts`）：通过 `runtime.Port` 接收未命中缓存的批次，统一限制跨标签页并发，由 `provider` 调用用户配置的 API。

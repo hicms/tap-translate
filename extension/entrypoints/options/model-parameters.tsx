@@ -39,13 +39,6 @@ export function ModelParametersEditor({
     frequencyPenalty: t('frequencyPenalty'),
     presencePenalty: t('presencePenalty'),
   };
-  const constraints = {
-    temperature: [0, 2],
-    maxTokens: [1, 1000000],
-    topP: [0, 1],
-    frequencyPenalty: [-2, 2],
-    presencePenalty: [-2, 2],
-  };
   return (
     <div className="model-settings">
       <h3>{t('modelParameters')}</h3>
@@ -57,9 +50,6 @@ export function ModelParametersEditor({
             id={key}
             type="number"
             label={labels[key]}
-            min={constraints[key][0]}
-            max={constraints[key][1]}
-            step={key === 'maxTokens' ? 1 : 0.01}
             required={key !== 'maxTokens'}
             value={model.parameters[key]}
             placeholder={key === 'maxTokens' ? t('automatic') : undefined}
@@ -70,7 +60,7 @@ export function ModelParametersEditor({
                   ? t('maxTokensHint')
                   : undefined
             }
-            onChange={(event) => parameter(key, event.target.value)}
+            onChange={(value) => parameter(key, value)}
           />
         ))}
         <Select
@@ -83,72 +73,67 @@ export function ModelParametersEditor({
             model.parameters.thinking === 'disabled' ||
             (model.parameters.thinking === 'auto' && resolution.profile.automatic === 'disabled')
           }
-          onChange={(event) =>
-            parameter('reasoningEffort', event.target.value as ModelDraft['parameters']['reasoningEffort'])
+          onChange={(value) =>
+            parameter('reasoningEffort', value as ModelDraft['parameters']['reasoningEffort'])
           }
-        >
-          {(['auto', 'low', 'medium', 'high', 'xhigh', 'max'] as const).map((value) => (
-            <option
-              key={value}
-              value={value}
-              disabled={value !== 'auto' && !resolution.profile.efforts.some((effort) => effort === value)}
-            >
-              {t(value === 'auto' ? 'automatic' : `effort${value[0]!.toUpperCase()}${value.slice(1)}`)}
-            </option>
-          ))}
-        </Select>
+          options={[
+            ...(['auto', 'low', 'medium', 'high', 'xhigh', 'max'] as const).map((value) => ({
+              value: value,
+              label: t(value === 'auto' ? 'automatic' : `effort${value[0]!.toUpperCase()}${value.slice(1)}`),
+              disabled: value !== 'auto' && !resolution.profile.efforts.some((effort) => effort === value),
+            })),
+          ]}
+        />
         <Select
           id="thinking"
           label={t('thinkingMode')}
           value={model.parameters.thinking}
-          onChange={(event) =>
-            parameter('thinking', event.target.value as ModelDraft['parameters']['thinking'])
-          }
+          onChange={(value) => parameter('thinking', value as ModelDraft['parameters']['thinking'])}
           aria-describedby="thinkingHint thinkingError"
-        >
-          <option value="auto">{t('automatic')}</option>
-          <option value="enabled" disabled={resolution.profile.enabled === null}>
-            {t('enabled')}
-          </option>
-          <option value="disabled" disabled={resolution.profile.disabled === null}>
-            {t('disabled')}
-          </option>
-        </Select>
+          options={[
+            { value: 'auto', label: t('automatic') },
+            {
+              value: 'enabled',
+              label: t('enabled'),
+              disabled: resolution.profile.enabled === null,
+            },
+            {
+              value: 'disabled',
+              label: t('disabled'),
+              disabled: resolution.profile.disabled === null,
+            },
+          ]}
+        />
         <Select
           id="tokenLimitField"
           label={t('tokenLimitField')}
           value={model.parameters.tokenLimitField}
-          onChange={(event) =>
-            parameter('tokenLimitField', event.target.value as ModelDraft['parameters']['tokenLimitField'])
+          onChange={(value) =>
+            parameter('tokenLimitField', value as ModelDraft['parameters']['tokenLimitField'])
           }
-        >
-          <option value="auto">{t('automatic')}</option>
-          <option value="max_tokens">max_tokens</option>
-          <option value="max_completion_tokens">max_completion_tokens</option>
-        </Select>
+          options={[
+            { value: 'auto', label: t('automatic') },
+            { value: 'max_tokens', label: 'max_tokens' },
+            { value: 'max_completion_tokens', label: 'max_completion_tokens' },
+          ]}
+        />
         <Input
           id="maxConcurrent"
           type="number"
-          min={1}
-          max={8}
-          step={1}
           required
           label={t('maxConcurrent')}
           hint={t('maxConcurrentHint')}
           value={model.maxConcurrent}
-          onChange={(event) => onChange({ ...model, maxConcurrent: event.target.value })}
+          onChange={(value) => onChange({ ...model, maxConcurrent: value })}
         />
         <Input
           id="batchSize"
           type="number"
-          min={1}
-          max={20}
-          step={1}
           required
           label={t('batchSize')}
           hint={t('batchSizeHint')}
           value={model.batchSize}
-          onChange={(event) => onChange({ ...model, batchSize: event.target.value })}
+          onChange={(value) => onChange({ ...model, batchSize: value })}
         />
       </div>
       <div className="thinking-settings">
@@ -162,11 +147,12 @@ export function ModelParametersEditor({
           id="thinkingAdapter"
           label={t('thinkingAdapter')}
           value={model.customThinking ? 'custom' : 'auto'}
-          onChange={(event) => onChange({ ...model, customThinking: event.target.value === 'custom' })}
-        >
-          <option value="auto">{t('thinkingAdapterAuto')}</option>
-          <option value="custom">{t('thinkingAdapterCustom')}</option>
-        </Select>
+          onChange={(value) => onChange({ ...model, customThinking: value === 'custom' })}
+          options={[
+            { value: 'auto', label: t('thinkingAdapterAuto') },
+            { value: 'custom', label: t('thinkingAdapterCustom') },
+          ]}
+        />
         <div id="thinkingCustomFields" hidden={!model.customThinking}>
           <p className="hint">{t('thinkingCustomHelp')}</p>
           <div className="field-grid">
@@ -178,7 +164,7 @@ export function ModelParametersEditor({
               spellCheck={false}
               disabled={!model.customThinking}
               value={model.enabledBody}
-              onChange={(event) => onChange({ ...model, enabledBody: event.target.value })}
+              onChange={(value) => onChange({ ...model, enabledBody: value })}
             />
             <Textarea
               id="thinkingDisabledBody"
@@ -188,7 +174,7 @@ export function ModelParametersEditor({
               spellCheck={false}
               disabled={!model.customThinking}
               value={model.disabledBody}
-              onChange={(event) => onChange({ ...model, disabledBody: event.target.value })}
+              onChange={(value) => onChange({ ...model, disabledBody: value })}
             />
           </div>
         </div>
@@ -201,7 +187,7 @@ export function ModelParametersEditor({
         maxLength={20000}
         placeholder={t('translationInstructionsPlaceholder')}
         value={model.parameters.systemPrompt}
-        onChange={(event) => parameter('systemPrompt', event.target.value)}
+        onChange={(value) => parameter('systemPrompt', value)}
       />
       <Button
         id="resetModelBtn"

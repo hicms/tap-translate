@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useContext, useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
-import { Check } from '../../ui/fields';
+import { FileInput } from '@astryxdesign/core/FileInput';
+import { Check, FormDisabled } from '../../ui/fields';
 import { Dialog } from '../../ui/dialog';
 import { useLocale } from '../../ui/locale';
 import { clearCache } from '../../lib/cache';
@@ -20,17 +21,18 @@ export function DataPanel({
   const [includeHeaders, setIncludeHeaders] = useState(false);
   const [preview, setPreview] = useState<Partial<Settings> | null>(null);
   const [importing, setImporting] = useState(false);
-  const file = useRef<HTMLInputElement>(null);
+  const [confirmation, setConfirmation] = useState<'export' | 'cache' | null>(null);
+  const locked = useContext(FormDisabled);
   async function exportSettings() {
-    if (includeSecrets && !window.confirm(t('confirmExportSecrets'))) return;
-    if (includeHeaders && !window.confirm(t('confirmExportCustomHeaders'))) return;
     try {
       const output = buildSettingsExport(await getSettings(), {
         includeApiKey: includeSecrets,
         includeCustomHeaders: includeHeaders,
       });
       const url = URL.createObjectURL(
-        new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' }),
+        new Blob([JSON.stringify(output, null, 2)], {
+          type: 'application/json',
+        }),
       );
       const link = document.createElement('a');
       link.href = url;
@@ -75,16 +77,7 @@ export function DataPanel({
       <div className="data-block">
         <h3>{t('sectionCache')}</h3>
         <p className="hint">{t('cacheHint')}</p>
-        <Button
-          id="clearCacheBtn"
-          label={t('clearCache')}
-          onClick={() => {
-            if (window.confirm(t('confirmClearCache')))
-              void clearCache()
-                .then(() => report(t('cacheCleared')))
-                .catch((error) => report(String(error), true));
-          }}
-        />
+        <Button id="clearCacheBtn" label={t('clearCache')} onClick={() => setConfirmation('cache')} />
       </div>
       <div className="data-block">
         <h3>{t('sectionImportExport')}</h3>
@@ -93,31 +86,34 @@ export function DataPanel({
             id="exportBtn"
             label={t('exportSettings')}
             onClick={() => {
-              void exportSettings();
+              if (includeSecrets || includeHeaders) setConfirmation('export');
+              else void exportSettings();
             }}
           />
-          <Button id="importBtn" label={t('importSettings')} onClick={() => file.current?.click()} />
-          <input
-            id="importFile"
-            ref={file}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={(event) => {
-              const selected = event.target.files?.[0];
-              event.target.value = '';
-              if (selected)
-                void selected
-                  .text()
-                  .then((text) => setPreview(prepareSettingsImport(JSON.parse(text))))
-                  .catch((error) =>
-                    report(
-                      `${t('importFailed')}: ${error instanceof Error ? error.message : String(error)}`,
-                      true,
-                    ),
-                  );
-            }}
-          />
+          <div id="importFile" className="import-file">
+            <FileInput
+              label={t('importSettings')}
+              isLabelHidden
+              placeholder={t('importSettings')}
+              value={null}
+              isDisabled={locked || importing}
+              width="100%"
+              accept="application/json,.json"
+              onChange={(files) => {
+                const selected = Array.isArray(files) ? files[0] : files;
+                if (selected)
+                  void selected
+                    .text()
+                    .then((text) => setPreview(prepareSettingsImport(JSON.parse(text))))
+                    .catch((error) =>
+                      report(
+                        `${t('importFailed')}: ${error instanceof Error ? error.message : String(error)}`,
+                        true,
+                      ),
+                    );
+              }}
+            />
+          </div>
         </div>
         <Check
           id="includeSecrets"
@@ -173,6 +169,37 @@ export function DataPanel({
                 .then(() => setPreview(null))
                 .catch((error) => report(String(error), true))
                 .finally(() => setImporting(false));
+            }}
+          />
+        </div>
+      </Dialog>
+      <Dialog
+        id="dataConfirmDialog"
+        title={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
+        open={confirmation !== null}
+        onClose={() => setConfirmation(null)}
+      >
+        {confirmation === 'cache' ? (
+          <p>{t('confirmClearCache')}</p>
+        ) : (
+          <>
+            {includeSecrets ? <p>{t('confirmExportSecrets')}</p> : null}
+            {includeHeaders ? <p>{t('confirmExportCustomHeaders')}</p> : null}
+          </>
+        )}
+        <div className="actions">
+          <Button value="cancel" label={t('cancel')} onClick={() => setConfirmation(null)} />
+          <Button
+            value="confirm"
+            variant="primary"
+            label={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
+            onClick={() => {
+              if (confirmation === 'cache')
+                void clearCache()
+                  .then(() => report(t('cacheCleared')))
+                  .catch((error) => report(String(error), true));
+              else void exportSettings();
+              setConfirmation(null);
             }}
           />
         </div>

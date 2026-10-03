@@ -1,3 +1,4 @@
+import { selectOption } from './helpers/astryx-controls';
 import path from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
@@ -24,7 +25,7 @@ test('simple settings navigate by tabs, history and keyboard; errors reveal hidd
   await page.goto(`chrome-extension://${extensionId}/options.html#section-reading`);
   await expect(page.locator('#uiLocale')).toBeVisible();
   await optionsLocale(page, 'zh-CN');
-  await expect(page.locator('#apiBase')).toBeHidden();
+  await expect(page.locator('#apiBase input')).toBeHidden();
   await expect(page.locator('#serviceEditorTitle')).toBeVisible();
   await expect(page.locator('#useModelBtn')).toHaveCount(0);
   await screenshot(page, 'minimal-options-desktop.png');
@@ -60,12 +61,12 @@ test('simple settings navigate by tabs, history and keyboard; errors reveal hidd
   await expect(header).toBeVisible();
   await expect(header).toBeFocused();
   await header.fill('X-Example');
-  await page.locator('#maxConcurrent').fill('9');
+  await page.locator('#maxConcurrent input').fill('9');
   await page.locator('#serviceEditor [data-editor-tab="basic"]').click();
   await page.locator('#saveBtn').click();
-  await expect(page.locator('#maxConcurrent')).toBeVisible();
-  await expect(page.locator('#maxConcurrent')).toBeFocused();
-  await page.locator('#maxConcurrent').fill('3');
+  await expect(page.locator('#maxConcurrent input')).toBeVisible();
+  await expect(page.locator('#maxConcurrent input')).toBeFocused();
+  await page.locator('#maxConcurrent input').fill('3');
   await accessible(page);
   await screenshot(page, 'minimal-advanced-desktop.png', true);
   await page.locator('#serviceEditor [data-editor-tab="basic"]').click();
@@ -94,16 +95,17 @@ test('simple settings navigate by tabs, history and keyboard; errors reveal hidd
   await settingsTab(page, 'connection');
   await page.locator('#addProviderBtn').click();
   await page.locator('#providerPicker [data-provider-id="custom"]').click();
-  await expect(page.locator('#apiBase')).toBeVisible();
-  await expect(page.locator('#apiBase')).toBeFocused();
+  await page.locator('#confirmProviderBtn').click();
+  await expect(page.locator('#apiBase input')).toBeVisible();
+  await expect(page.locator('#apiBase input')).toBeFocused();
   expect(errors).toEqual([]);
 });
 
 test('saving locks the options draft and rejects duplicate submission until storage finishes', async ({ extContext, extensionId }) => {
   const page = await extContext.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
-  await expect(page.locator('#model')).toHaveValue(/.+/);
-  await page.locator('#model').fill('saved-model');
+  await expect(page.locator('#model input')).toHaveValue(/.+/);
+  await page.locator('#model input').fill('saved-model');
   await page.evaluate(() => {
     chrome.permissions.request = async () => true;
     const original = chrome.storage.sync.set.bind(chrome.storage.sync);
@@ -116,7 +118,7 @@ test('saving locks the options draft and rejects duplicate submission until stor
   await expect(page.locator('#optionsForm')).toHaveAttribute('aria-busy', 'true');
   expect(await page.locator('#optionsForm').evaluate((form: HTMLFormElement) => form.inert)).toBe(true);
   await page.keyboard.type('accidental-edit');
-  await expect(page.locator('#model')).toHaveValue('saved-model');
+  await expect(page.locator('#model input')).toHaveValue('saved-model');
   await page.evaluate(() => {
     (document.getElementById('optionsForm') as HTMLFormElement).requestSubmit();
     (window as Window & { releaseSave?: () => void }).releaseSave!();
@@ -124,24 +126,24 @@ test('saving locks the options draft and rejects duplicate submission until stor
   await expect(page.locator('#optionsForm')).not.toHaveAttribute('aria-busy');
   await expect(page.locator('#saveBtn')).toBeDisabled();
   await page.reload();
-  await expect(page.locator('#model')).toHaveValue('saved-model');
+  await expect(page.locator('#model input')).toHaveValue('saved-model');
 });
 
 test('onboarding is one form, reveals invalid endpoint, and never completes after denied permission', async ({ extContext, extensionId }) => {
   const page = await extContext.newPage();
   await page.goto(`chrome-extension://${extensionId}/onboarding.html`);
-  await expect(page.locator('#apiKey')).toBeEnabled();
-  await expect(page.locator('#apiBase')).toBeHidden();
+  await expect(page.locator('#apiKey input')).toBeEnabled();
+  await expect(page.locator('#apiBase input')).toBeHidden();
   await page.locator('#finishBtn').click();
-  await expect(page.locator('#apiKey')).toBeFocused();
-  await page.locator('#apiKey').fill('session-key');
+  await expect(page.locator('#apiKey input')).toBeFocused();
+  await page.locator('#apiKey input').fill('session-key');
   await page.locator('#connectionOptions > summary').click();
-  await page.locator('#apiBase').fill('http://example.org/v1');
+  await page.locator('#apiBase input').fill('http://example.org/v1');
   await page.locator('#connectionOptions > summary').click();
   await page.locator('#finishBtn').click();
-  await expect(page.locator('#apiBase')).toBeVisible();
-  await expect(page.locator('#apiBase')).toBeFocused();
-  await page.locator('#apiBase').fill('https://example.org/v1');
+  await expect(page.locator('#apiBase input')).toBeVisible();
+  await expect(page.locator('#apiBase input')).toBeFocused();
+  await page.locator('#apiBase input').fill('https://example.org/v1');
   await page.evaluate(() => { chrome.permissions.request = async () => false; });
   await page.locator('#finishBtn').click();
   await expect(page.locator('#testStatus')).toHaveClass(/is-error/);
@@ -166,8 +168,8 @@ test('onboarding tests and saves the same model parameters, preserves other wind
     page.on('request', request => { if (request.url().endsWith('/chat/completions')) requests.push(request.postDataJSON()); });
     await page.setViewportSize({ width: 1504, height: 1044 });
     await page.goto(`chrome-extension://${extensionId}/onboarding.html`);
-    await expect(page.locator('#apiKey')).toBeEnabled();
-    await page.locator('#apiKey').fill('only-this-session');
+    await expect(page.locator('#apiKey input')).toBeEnabled();
+    await page.locator('#apiKey input').fill('only-this-session');
     await page.locator('#rememberKey input').uncheck();
     await screenshot(page, 'minimal-onboarding-desktop.png');
     await accessible(page);
@@ -223,7 +225,7 @@ test('popup keeps the main action first and reveals active website policy and it
     await screenshot(popup, 'minimal-popup-never.png');
     await popup.locator('#sitePreferences > summary').click();
     await expect(popup.locator('#sitePolicy')).toBeEnabled();
-    await popup.locator('#sitePolicy').selectOption('global');
+    await selectOption(popup.locator('#sitePolicy'), 'global');
     await expect(popup.locator('#primaryBtn')).toBeEnabled();
     await expect(popup.locator('#sitePolicySummary')).toBeEmpty();
     await popup.locator('#sitePreferences > summary').click();

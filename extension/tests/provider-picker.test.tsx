@@ -3,16 +3,23 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProviderPicker } from '../ui/provider-picker';
+import { FormDisabled } from '../ui/fields';
 
 vi.mock('../lib/i18n', () => ({ getUiMessage: (key: string) => key }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 let root: Root;
-function mount(inline = false) {
+function mount(disabled = false) {
   const container = document.createElement('div');
   document.body.append(container);
   const select = vi.fn();
   root = createRoot(container);
-  act(() => root.render(<ProviderPicker selected="custom" onSelect={select} inline={inline} />));
+  act(() =>
+    root.render(
+      <FormDisabled value={disabled}>
+        <ProviderPicker selected="local-api" onSelect={select} inline />
+      </FormDisabled>,
+    ),
+  );
   return { container, select };
 }
 afterEach(() => {
@@ -20,36 +27,27 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe('React provider picker', () => {
-  it('exposes grouped presets and invokes selection once', () => {
-    const { container, select } = mount(true);
-    expect(container.querySelectorAll('[data-provider-id]')).toHaveLength(8);
-    expect(container.querySelector<HTMLButtonElement>('.provider-picker-trigger')!.hidden).toBe(true);
-    const choice = container.querySelector<HTMLButtonElement>('[data-provider-id="minimax"]')!;
+describe('component provider choices', () => {
+  it('exposes every preset as a radio and invokes selection once', () => {
+    const { container, select } = mount();
+    expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(8);
+    const choice = container.querySelector('[data-provider-id="minimax"]')!;
     expect(choice.querySelector('img')?.getAttribute('src')).toBe('icons/providers/minimax.svg');
-    act(() => choice.click());
+    act(() => choice.querySelector<HTMLInputElement>('input')!.click());
     expect(select).toHaveBeenCalledWith('minimax');
     expect(select).toHaveBeenCalledTimes(1);
   });
-  it('returns focus on Escape and removes outside-click listener on unmount', () => {
-    const { container } = mount();
-    const trigger = container.querySelector<HTMLButtonElement>('.provider-picker-trigger')!;
-    act(() => trigger.click());
-    const menu = container.querySelector<HTMLElement>('.provider-picker-menu')!;
-    expect(menu.hidden).toBe(false);
-    act(() => menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-    expect(menu.hidden).toBe(true);
-    expect(document.activeElement).toBe(trigger);
-    const remove = vi.spyOn(document, 'removeEventListener');
-    act(() => trigger.click());
-    act(() => root.render(null));
-    expect(remove.mock.calls.some(([type]) => type === 'click')).toBe(true);
-    remove.mockRestore();
+  it('lets the custom preset be chosen when opening a new provider dialog', () => {
+    const { container, select } = mount();
+    act(() => container.querySelector<HTMLInputElement>('[data-provider-id="custom"] input')!.click());
+    expect(select).toHaveBeenCalledWith('custom');
+    expect(select).toHaveBeenCalledTimes(1);
   });
-  it('lets a containing modal handle Escape for inline choices', () => {
-    const { container } = mount(true);
-    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-    act(() => container.querySelector('.provider-picker-menu')!.dispatchEvent(event));
-    expect(event.defaultPrevented).toBe(false);
+  it('blocks every radio while the owning form transaction is busy', () => {
+    const { container, select } = mount(true);
+    const controls = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')];
+    expect(controls.every((control) => control.disabled)).toBe(true);
+    act(() => controls.forEach((control) => control.click()));
+    expect(select).not.toHaveBeenCalled();
   });
 });

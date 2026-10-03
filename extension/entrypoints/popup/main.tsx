@@ -61,34 +61,35 @@ function Popup({ settings }: { settings: Settings }) {
           label={t('translateTo')}
           value={popup.preferences.targetLang}
           disabled={!view.controlsEnabled}
-          onChange={(event) => {
+          onChange={(value) => {
             void popup.changePreferences({
               ...popup.preferences,
-              targetLang: event.target.value as TargetLang,
+              targetLang: value as TargetLang,
             });
           }}
-        >
-          {SUPPORTED_TARGET_LANGS.map((code) => (
-            <option key={code} value={code}>
-              {t(languageKey(code))}
-            </option>
-          ))}
-        </Select>
+          options={[
+            ...SUPPORTED_TARGET_LANGS.map((code) => ({
+              value: code,
+              label: t(languageKey(code)),
+            })),
+          ]}
+        />
         <Select
           id="mode"
           label={t('displayStyle')}
           value={popup.preferences.mode}
           disabled={!view.controlsEnabled}
-          onChange={(event) => {
+          onChange={(value) => {
             void popup.changePreferences({
               ...popup.preferences,
-              mode: event.target.value as TranslationMode,
+              mode: value as TranslationMode,
             });
           }}
-        >
-          <option value="bilingual">{t('modeBilingual')}</option>
-          <option value="replace">{t('modeReplace')}</option>
-        </Select>
+          options={[
+            { value: 'bilingual', label: t('modeBilingual') },
+            { value: 'replace', label: t('modeReplace') },
+          ]}
+        />
         <Button
           id="primaryBtn"
           width="100%"
@@ -127,14 +128,15 @@ function Popup({ settings }: { settings: Settings }) {
             hint={t('sitePolicyPopupHint')}
             value={popup.policy}
             disabled={!view.controlsEnabled || !popup.snapshot.configured || popup.policySaving}
-            onChange={(event) => {
-              void popup.changePolicy(event.target.value as 'global' | 'auto' | 'never');
+            onChange={(value) => {
+              void popup.changePolicy(value as 'global' | 'auto' | 'never');
             }}
-          >
-            <option value="global">{t('sitePolicyGlobal')}</option>
-            <option value="auto">{t('sitePolicyAuto')}</option>
-            <option value="never">{t('sitePolicyNever')}</option>
-          </Select>
+            options={[
+              { value: 'global', label: t('sitePolicyGlobal') },
+              { value: 'auto', label: t('sitePolicyAuto') },
+              { value: 'never', label: t('sitePolicyNever') },
+            ]}
+          />
         </details>
       </main>
     </div>

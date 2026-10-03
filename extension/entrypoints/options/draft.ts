@@ -113,7 +113,14 @@ export function providerDraft(provider: ProviderConfig): ProviderDraft {
   };
 }
 export function newSite(host = '', builtin = false): SiteDraft {
-  return { id: crypto.randomUUID(), builtin, host, policy: 'global', mode: '', targetLang: '' };
+  return {
+    id: crypto.randomUUID(),
+    builtin,
+    host,
+    policy: 'global',
+    mode: '',
+    targetLang: '',
+  };
 }
 export function optionsDraft(settings: Settings): OptionsDraft {
   const hosts = new Set([
@@ -145,7 +152,12 @@ export function optionsDraft(settings: Settings): OptionsDraft {
   };
 }
 
-export function readModel(model: ModelDraft, providerId: string, t: Translate): ProviderModel {
+export function readModel(
+  model: ModelDraft,
+  providerId: string,
+  t: Translate,
+  validate = true,
+): ProviderModel {
   let thinkingOverride: ModelParameters['thinkingOverride'] = null;
   if (model.customThinking) {
     const read = (field: 'enabledBody' | 'disabledBody') => {
@@ -159,21 +171,46 @@ export function readModel(model: ModelDraft, providerId: string, t: Translate): 
         });
       }
     };
-    thinkingOverride = { enabled: read('enabledBody'), disabled: read('disabledBody') };
+    thinkingOverride = {
+      enabled: read('enabledBody'),
+      disabled: read('disabledBody'),
+    };
   }
-  const requiredNumber = (value: string) => (value.trim() ? Number(value) : Number.NaN);
+  function number(field: NumericParameter | 'maxConcurrent' | 'batchSize'): number {
+    const raw = field === 'maxConcurrent' || field === 'batchSize' ? model[field] : model.parameters[field];
+    if (field === 'maxTokens' && raw === '') return 0;
+    const value = Number(raw);
+    const integer = field === 'maxTokens' || field === 'maxConcurrent' || field === 'batchSize';
+    const scaled = value * (integer ? 1 : 100);
+    // Preserve the former number input's decimal grammar and step constraints
+    // for every model draft, including editors currently unmounted.
+    if (
+      validate &&
+      (!/^-?(?:\d+|\d*\.\d+)(?:[eE][+-]?\d+)?$/.test(raw) ||
+        !Number.isFinite(value) ||
+        Math.abs(scaled - Math.round(scaled)) > 1e-8 ||
+        (field === 'maxTokens' && value === 0))
+    ) {
+      throw new DraftError(t('errNumericDraft'), {
+        providerId,
+        modelId: model.id,
+        field,
+      });
+    }
+    return raw.trim() ? value : Number.NaN;
+  }
   return {
     id: model.id,
     name: model.name.trim(),
-    maxConcurrent: requiredNumber(model.maxConcurrent),
-    batchSize: requiredNumber(model.batchSize),
+    maxConcurrent: number('maxConcurrent'),
+    batchSize: number('batchSize'),
     parameters: {
       ...model.parameters,
-      temperature: requiredNumber(model.parameters.temperature),
-      maxTokens: Number(model.parameters.maxTokens),
-      topP: requiredNumber(model.parameters.topP),
-      frequencyPenalty: requiredNumber(model.parameters.frequencyPenalty),
-      presencePenalty: requiredNumber(model.parameters.presencePenalty),
+      temperature: number('temperature'),
+      maxTokens: number('maxTokens'),
+      topP: number('topP'),
+      frequencyPenalty: number('frequencyPenalty'),
+      presencePenalty: number('presencePenalty'),
       thinkingOverride,
     },
   };
@@ -187,7 +224,10 @@ export function readProvider(provider: ProviderDraft, t: Translate, validate = t
     const value = row.value.trim();
     if (!name && !value) continue;
     if (!name || seen.has(name.toLowerCase()))
-      throw new DraftError(t('customHeadersInvalid'), { providerId: provider.id, field: `header-${row.id}` });
+      throw new DraftError(t('customHeadersInvalid'), {
+        providerId: provider.id,
+        field: `header-${row.id}`,
+      });
     seen.add(name.toLowerCase());
     customHeaders[name] = value;
   }
@@ -200,7 +240,7 @@ export function readProvider(provider: ProviderDraft, t: Translate, validate = t
     persistApiKey: provider.persistApiKey,
     activeModelId: provider.activeModelId,
     customHeaders: normalizeCustomHeaders(customHeaders),
-    models: provider.models.map((model) => readModel(model, provider.id, t)),
+    models: provider.models.map((model) => readModel(model, provider.id, t, validate)),
   };
   if (validate) {
     for (const model of result.models) {
@@ -248,7 +288,11 @@ export function readSiteContent(site: SiteDraft, t: Translate, validate = true):
       ...(site.content !== undefined ? { content: site.content.split('\n') } : {}),
       ...(site.ignore !== undefined ? { ignore: site.ignore.split('\n') } : {}),
     };
-    return normalizeSiteContentRules([rule], validate ? document : null)[0] ?? { host };
+    return (
+      normalizeSiteContentRules([rule], validate ? document : null)[0] ?? {
+        host,
+      }
+    );
   } catch (error) {
     throw new DraftError(contentErrorMessage(error, t), {
       siteId: site.id,
@@ -266,9 +310,16 @@ export function readOptions(draft: OptionsDraft, t: Translate, validate = true):
     try {
       host = normalizeSiteHost(site.host);
     } catch {
-      throw new DraftError(t('errSiteHostInvalid'), { siteId: site.id, field: 'host' });
+      throw new DraftError(t('errSiteHostInvalid'), {
+        siteId: site.id,
+        field: 'host',
+      });
     }
-    if (hosts.has(host)) throw new DraftError(t('errSiteHostDuplicate'), { siteId: site.id, field: 'host' });
+    if (hosts.has(host))
+      throw new DraftError(t('errSiteHostDuplicate'), {
+        siteId: site.id,
+        field: 'host',
+      });
     hosts.add(host);
     const rule: SiteRule = {
       host,

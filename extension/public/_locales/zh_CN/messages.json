@@ -1,4 +1,5 @@
 {
+  "errNumericDraft": {"message": "请输入以 0.01 为步长的十进制数；Token 上限和批次参数须为整数。Token 上限留空表示自动，不能填写 0。"},
   "extName": {"message": "TapTranslate 双语翻译"},
   "extDescription": {"message": "使用任何兼容 OpenAI 的 API 进行双语对照或直接替换翻译。"},
   "cmdToggleTranslate": {"message": "翻译 / 恢复当前页面"},

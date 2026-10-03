@@ -39,7 +39,7 @@ The extension translates pages through the API you configure and caches translat
 
 TypeScript + WXT (Manifest V3), with React 19 + [Astryx](https://github.com/facebook/astryx) UI and no bundled backend.
 
-- **Extension pages** (`entrypoints/popup`, `options`, `onboarding`) use React components and shared Astryx controls/theme in `ui/`. Options keeps editable provider/model/site drafts separate from validated settings and saves only changed fields.
+- **Extension pages** (`entrypoints/popup`, `options`, `onboarding`) use React components and shared Astryx controls/theme in `ui/`, including text/number drafts, dropdowns, checkboxes, radio choices, file selection and dialogs. Browsers without CSS anchor positioning use Astryx bottom sheets for selection. Options keeps editable provider/model/site drafts separate from validated settings and saves only changed fields.
 - **Selection overlay** (`lib/overlay`) mounts React + Astryx inside an isolated ShadowRoot. All fonts, scripts and styles ship locally; extension themes do not modify host-page styles.
 - **Content script** (`entrypoints/tap-translate.ts`) runs a session per frame: `collector` + `sites` identify text, `scheduler` manages viewport queues and retries, and `renderer` displays translations or restores the page.
 - **Background** (`entrypoints/background.ts`) receives uncached batches through `runtime.Port`, limits concurrency across tabs, and calls the configured API through `provider`.

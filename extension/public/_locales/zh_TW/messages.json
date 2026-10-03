@@ -1,4 +1,5 @@
 {
+  "errNumericDraft": {"message": "請輸入以 0.01 為間距的十進位數；Token 上限和批次參數須為整數。Token 上限留空表示自動，不能填寫 0。"},
   "extName": {"message": "TapTranslate 雙語翻譯"},
   "extDescription": {"message": "使用任何相容於 OpenAI 的 API，提供雙語對照或直接取代的網頁翻譯。"},
   "cmdToggleTranslate": {"message": "翻譯 / 還原目前頁面"},
