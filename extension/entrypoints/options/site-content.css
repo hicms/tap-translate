@@ -1,0 +1,19 @@
+.content-editor { margin: 0; }
+.content-editor details > summary { cursor: pointer; }
+.content-editor > .field { margin-top: 20px; }
+.content-editor textarea, .content-effective { font-family: ui-monospace, monospace; font-size: 13px; }
+.content-editor textarea:disabled { color: var(--muted); background: var(--surface-subtle); }
+.content-editor .actions-inline { flex-wrap: wrap; margin: 16px 0; }
+.content-effective { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; padding: 12px; background: var(--surface-subtle); }
+.content-error { color: var(--danger); font-size: 13px; }
+.content-check-results { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+.content-editor [aria-invalid="true"] { border-color: var(--danger); }
+
+.content-editor select + textarea { margin-top: 8px; }
+.content-field-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.content-field-head label { margin: 0; }
+.content-field-head select { width: auto; max-width: 55%; font-size: 12px; min-height: 34px; padding: 5px 30px 5px 8px; }
+.content-field-caption { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 6px; }
+.content-field-caption .hint { margin: 0; font-size: 12px; }
+.content-field-caption button { border: 0; background: transparent; color: var(--primary); flex-shrink: 0; font-size: 12px; min-height: 26px; padding: 0; }
+.content-editor textarea { resize: vertical; min-height: 90px; }

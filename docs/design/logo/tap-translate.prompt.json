@@ -1,0 +1,24 @@
+{
+  "tool": "image_gen.imagegen (built-in)",
+  "use_case": "background-extraction",
+  "source": "../logo-concepts/14-language-exchange-rounded.png",
+  "generated_source": "C:\\Users\\zhoujin\\.codex\\generated_images\\01a101e4-01e9-73b0-a6bd-2ef93d998fe7\\exec-ba0ec592-0252-4ad4-bc88-1c50bcc8db66.png",
+  "transparent_background": true,
+  "prompt": "Use case: background-extraction. Convert the LARGE CENTER LOGO in the reference design board into a single finished app icon on a transparent background. Reproduce that logo faithfully: a completely filled SOLID OPAQUE orange-red rounded square with four complete rounded corners, a large white uppercase A, and two white curved exchange arrows around it. The orange-red rounded square is the actual solid body of the logo and must NOT be transparent or partially transparent anywhere inside. All white shapes must also be opaque. ONLY the empty area OUTSIDE the rounded square is transparent. Flat clean vector-like graphic, uniform solid color fills, no texture, no shadows, no noise, no cut-outs in the orange field. Keep the reference's proportions. Output a square canvas with one centered logo at 90% of canvas width. Remove all design-board text, labels, wordmarks and smaller examples. This is a production icon export, do not redesign.",
+  "export": {
+    "operation": "Normalize square padding and resize with alpha-preserving bicubic resampling.",
+    "crop": {
+      "x": 72,
+      "y": 84,
+      "width": 1110,
+      "height": 1110
+    },
+    "master": "tap-translate.png",
+    "extension_sizes": [
+      16,
+      32,
+      48,
+      128
+    ]
+  }
+}

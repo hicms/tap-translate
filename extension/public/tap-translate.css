@@ -1,0 +1,329 @@
+/* Shared typography — CJK + Latin, inherit page size scale.
+   Inline companions may wrap at normal language boundaries when a sidebar or
+   menu constrains their host. Block-only "anywhere" wrapping stays below. */
+.tap-translate-target,
+.tap-translate-target--inner,
+.tap-translate-target--inline,
+.tap-translate-nav-sub,
+.tap-translate-target--compact {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Noto Sans SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Resist host-page layout that would float / absolutize / rotate companions. */
+  position: static !important;
+  float: none !important;
+  clear: none !important;
+  inset: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  animation: tap-translate-fade-in 0.18s ease-out;
+}
+
+/* ── Inline companion (Immersive-style): same-line muted suffix ── */
+.tap-translate-target--inline,
+.tap-translate-nav-sub,
+.tap-translate-target--compact,
+nav .tap-translate-nav-sub,
+aside .tap-translate-nav-sub,
+[role="navigation"] .tap-translate-nav-sub,
+[role="menubar"] .tap-translate-nav-sub,
+[role="menu"] .tap-translate-nav-sub {
+  display: inline !important;
+  box-sizing: border-box;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 1em;
+  line-height: inherit;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  vertical-align: baseline;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  text-wrap: wrap;
+  hyphens: auto;
+  color: color-mix(in srgb, currentColor 88%, transparent);
+}
+
+/* Links / buttons: inline suffix on the SAME line (Immersive: "Premium 高级版") */
+.tap-translate-target--inner,
+a .tap-translate-target--inner,
+button .tap-translate-target--inner {
+  display: inline !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 1em;
+  line-height: inherit;
+  font-weight: 400;
+  vertical-align: baseline;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  text-wrap: wrap;
+  hyphens: auto;
+  color: color-mix(in srgb, currentColor 90%, transparent);
+}
+
+/* Compact controls (marked by the renderer) stay on one horizontal line.
+   Ordinary nav/sidebar links are left unmarked so a narrow column can wrap. */
+[data-tap-translate-nowrap="true"] {
+  white-space: nowrap !important;
+}
+
+[data-tap-translate-nowrap="true"] .tap-translate-target--inner,
+[data-tap-translate-nowrap="true"] .tap-translate-target--inline,
+[data-tap-translate-nowrap="true"] .tap-translate-nav-sub,
+[data-tap-translate-nowrap="true"] .tap-translate-target--compact {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  text-wrap: nowrap;
+}
+
+/*
+ * Flex/inline-flex hosts: original text + companion share one flex item so the
+ * translation wraps as "Involved 参与" (Immersive), not a sideways sibling of a
+ * stacked original. For compact CTAs the host is marked nowrap, so the same
+ * wrapper expands the painted button around icon + original + translation.
+ */
+.tap-translate-flow {
+  display: inline !important;
+  position: static !important;
+  float: none !important;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  vertical-align: baseline;
+  white-space: inherit;
+}
+
+a[data-tap-translate-done] .tap-translate-target--inner {
+  text-align: inherit;
+}
+
+/* ── Block companion: long prose below original (nested <span> inside host) ──
+   Inherit host typography so the translation shares the same visual metrics as
+   the original (Immersive dual-mode). Only mute color + open a new line. */
+.tap-translate-target:not(.tap-translate-target--inline):not(.tap-translate-target--inner):not(.tap-translate-nav-sub):not(.tap-translate-target--compact),
+span.tap-translate-target:not(.tap-translate-target--inline):not(.tap-translate-target--inner):not(.tap-translate-nav-sub):not(.tap-translate-target--compact) {
+  display: block !important;
+  box-sizing: border-box;
+  width: auto;
+  max-width: 100%;
+  margin: 0.12em 0 0.2em;
+  padding: 0;
+  border: none;
+  /* Cancel inherited first-line indent so nested companions align to the
+     content edge like Immersive afterend siblings would. */
+  text-indent: 0 !important;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  /* Preserve the source host's line-composition algorithm. Pages increasingly
+     use `text-wrap: balance` for hero copy/headings; forcing `pretty` here makes
+     the translation fill the entire max-width while the source stays balanced. */
+  white-space: inherit;
+  text-wrap: inherit;
+  word-break: inherit;
+  overflow-wrap: inherit;
+  hyphens: inherit;
+  color: color-mix(in srgb, currentColor 84%, transparent);
+}
+
+/* Rich bilingual companions keep inline links/code from the cloned skeleton. */
+.tap-translate-target a,
+.tap-translate-target--inner a,
+.tap-translate-target--inline a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.tap-translate-target code,
+.tap-translate-target kbd,
+.tap-translate-target samp,
+.tap-translate-target--inner code,
+.tap-translate-target--inline code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+/* When nested inside a flex/grid host, force a full-row track so the
+   translation sits below the original instead of being squeezed sideways. */
+.tap-translate-target--break {
+  flex: 0 0 100% !important;
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+h1 > .tap-translate-target,
+h2 > .tap-translate-target,
+h3 > .tap-translate-target,
+h1 + .tap-translate-target,
+h2 + .tap-translate-target,
+h3 + .tap-translate-target {
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0.1em 0 0.18em;
+  color: color-mix(in srgb, currentColor 86%, transparent);
+}
+
+h4 > .tap-translate-target,
+h5 > .tap-translate-target,
+h6 > .tap-translate-target,
+h4 + .tap-translate-target,
+h5 + .tap-translate-target,
+h6 + .tap-translate-target {
+  font-size: inherit;
+  margin: 0.08em 0 0.16em;
+}
+
+p > .tap-translate-target,
+p + .tap-translate-target {
+  margin-top: 0.1em;
+  margin-bottom: 0.2em;
+}
+
+/* Block-layout card/title links: companion nests inside the <a> and must open
+   a new line under the original (not a mid-line suffix). */
+a > .tap-translate-target:not(.tap-translate-target--inline):not(.tap-translate-target--inner):not(.tap-translate-nav-sub):not(.tap-translate-target--compact) {
+  display: block !important;
+  width: auto !important;
+  max-width: 100%;
+  margin: 0.1em 0 0.16em;
+  text-indent: 0 !important;
+}
+
+/* List hosts: companion stays in the content box so the translation aligns
+   under the original text, not flush under the marker. Prefer nested
+   `li >`; legacy `li +` siblings are reparented by repairStructure. */
+li > .tap-translate-target:not(.tap-translate-target--inline):not(.tap-translate-target--inner):not(.tap-translate-nav-sub):not(.tap-translate-target--compact),
+[role="listitem"] > .tap-translate-target:not(.tap-translate-target--inline):not(.tap-translate-target--inner):not(.tap-translate-nav-sub):not(.tap-translate-target--compact) {
+  display: block !important;
+  width: auto !important;
+  max-width: 100%;
+  margin-top: 0.05em;
+  margin-bottom: 0.18em;
+  margin-inline: 0;
+  box-sizing: border-box;
+}
+
+/* When the page used list-style-position:inside, force outside for the
+   bilingual session so the nested block lines up with the text run. */
+li[data-tap-translate-list-outside="true"],
+[role="listitem"][data-tap-translate-list-outside="true"] {
+  list-style-position: outside !important;
+}
+
+.wy-breadcrumbs .tap-translate-target,
+.breadcrumbs .tap-translate-target,
+[role="navigation"] .tap-translate-target {
+  font-size: 0.97em;
+  margin: 0.05em 0 0.16em;
+}
+
+.tap-translate-original-hidden {
+  display: none !important;
+}
+
+.tap-translate-replace-text {
+  display: inline;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  white-space: normal;
+}
+
+.tap-translate-error {
+  display: block !important;
+  position: static !important;
+  float: none !important;
+  writing-mode: horizontal-tb !important;
+  transform: none !important;
+  margin: 0.35em 0;
+  padding: 0.25em 0.55em;
+  font-size: 0.85em;
+  font-style: normal;
+  cursor: help;
+  color: #b91c1c;
+  background-color: color-mix(in srgb, #b91c1c 6%, transparent);
+  border-left: 2px solid #b91c1c;
+  border-radius: 0 4px 4px 0;
+  animation: tap-translate-fade-in 0.2s ease-out;
+}
+
+@keyframes tap-translate-fade-in {
+  /* Opacity-only: never animate transform/size (would amplify CLS). */
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-translate-target,
+  .tap-translate-target--inner,
+  .tap-translate-target--inline,
+  .tap-translate-nav-sub,
+  .tap-translate-target--compact,
+  .tap-translate-error {
+    animation: none !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .tap-translate-target:not(.tap-translate-target--inline):not(.tap-translate-target--inner):not(.tap-translate-nav-sub):not(.tap-translate-target--compact) {
+    color: color-mix(in srgb, currentColor 88%, transparent);
+  }
+
+  h1 > .tap-translate-target,
+  h2 > .tap-translate-target,
+  h3 > .tap-translate-target,
+  h1 + .tap-translate-target,
+  h2 + .tap-translate-target,
+  h3 + .tap-translate-target {
+    color: color-mix(in srgb, currentColor 90%, transparent);
+  }
+
+  .tap-translate-target--inline,
+  .tap-translate-nav-sub,
+  nav .tap-translate-nav-sub,
+  aside .tap-translate-nav-sub,
+  [role="navigation"] .tap-translate-nav-sub {
+    color: color-mix(in srgb, currentColor 92%, transparent);
+  }
+
+  a .tap-translate-target--inner,
+  button .tap-translate-target--inner {
+    color: color-mix(in srgb, currentColor 94%, transparent);
+  }
+
+  .tap-translate-error {
+    color: #fca5a5;
+    background-color: color-mix(in srgb, #fca5a5 8%, transparent);
+    border-left-color: #fca5a5;
+  }
+}

@@ -1,0 +1,729 @@
+{
+  "extName": {
+    "message": "TapTranslate"
+  },
+  "extDescription": {
+    "message": "Bilingual or replacement page translation using any OpenAI-compatible API."
+  },
+  "cmdToggleTranslate": {
+    "message": "Translate / restore the current page"
+  },
+  "cmdToggleMode": {
+    "message": "Switch between bilingual and replace mode"
+  },
+  "translatePage": {
+    "message": "Translate page"
+  },
+  "restoreOriginal": {
+    "message": "Restore original"
+  },
+  "modeBilingual": {
+    "message": "Bilingual"
+  },
+  "modeReplace": {
+    "message": "Replace"
+  },
+  "targetLanguage": {
+    "message": "Target language"
+  },
+  "siteAuto": {
+    "message": "Auto-translate this site"
+  },
+  "optionsTitle": {
+    "message": "TapTranslate Settings"
+  },
+  "apiBaseUrl": {
+    "message": "API base URL"
+  },
+  "connectionMode": {
+    "message": "Connection route"
+  },
+  "connectionModeDirect": {
+    "message": "Direct API (DeepSeek default)"
+  },
+  "connectionModeProxy": {
+    "message": "Custom proxy"
+  },
+  "apiKey": {
+    "message": "API key"
+  },
+  "model": {
+    "message": "Model"
+  },
+  "defaultMode": {
+    "message": "Default translation mode"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "saved": {
+    "message": "Saved"
+  },
+  "errorNoText": {
+    "message": "No text selected"
+  },
+  "errorTranslationFailed": {
+    "message": "Translation failed"
+  },
+  "contextMenuTranslateSelection": {
+    "message": "Translate selection"
+  },
+  "overlayTitle": {
+    "message": "Translation"
+  },
+  "overlayCopy": {
+    "message": "Copy"
+  },
+  "overlayClose": {
+    "message": "Close"
+  },
+  "statusReady": {
+    "message": "Ready"
+  },
+  "statusTranslationQueued": { "message": "Waiting to translate" },
+  "statusTranslationRetrying": { "message": "Retrying translation" },
+  "statusTranslating": {
+    "message": "Translating..."
+  },
+  "statusDone": {
+    "message": "Done"
+  },
+  "statusWatching": {
+    "message": "Watching for new content"
+  },
+  "statusRestored": {
+    "message": "Restored"
+  },
+  "statusError": {
+    "message": "Error"
+  },
+  "statusTranslated": {
+    "message": "$1 translated"
+  },
+  "statusProgress": {
+    "message": "$1 / $2 translated"
+  },
+  "statusTranslatedWithFailed": {
+    "message": "$1 translated, $2 failed"
+  },
+  "statusNoContent": {
+    "message": "No translatable content"
+  },
+  "statusRestricted": {
+    "message": "Cannot translate this page"
+  },
+  "errorContentScript": {
+    "message": "Failed to inject content script"
+  },
+  "exportSettings": {
+    "message": "Export"
+  },
+  "importSettings": {
+    "message": "Import"
+  },
+  "includeSecrets": {
+    "message": "Include API key in export"
+  },
+  "exported": {
+    "message": "Exported"
+  },
+  "imported": {
+    "message": "Imported"
+  },
+  "importFailed": {
+    "message": "Import failed"
+  },
+  "sectionCache": {
+    "message": "Translation cache"
+  },
+  "cacheHint": {
+    "message": "Translations are cached locally to avoid re-sending identical text. Clearing frees storage and forces fresh translations."
+  },
+  "clearCache": {
+    "message": "Clear cache"
+  },
+  "cacheCleared": {
+    "message": "Cache cleared"
+  },
+  "sectionSiteRules": {
+    "message": "Site rules"
+  },
+  "siteRulesHint": {
+    "message": "Per-site overrides. Auto-translate applies on load; blacklisted sites are never translated."
+  },
+  "addSiteRule": {
+    "message": "Add site"
+  },
+  "siteHost": {
+    "message": "Host"
+  },
+  "ruleAuto": {
+    "message": "Auto"
+  },
+  "ruleDisabled": {
+    "message": "Off"
+  },
+  "siteRulesEmpty": {
+    "message": "No site rules yet. Toggle “Auto-translate this site” in the popup, or add one here."
+  },
+  "optionsSubtitle": {
+    "message": "Connect an API and choose translation defaults."
+  },
+  "sectionApi": {
+    "message": "API connection"
+  },
+  "apiBaseHint": {
+    "message": "Both connection routes use the OpenAI V1 protocol."
+  },
+  "apiKeyHint": {
+    "message": "Required by your API provider."
+  },
+  "apiKeyDirectHint": {
+    "message": "Required for a direct API connection."
+  },
+  "apiKeyProxyHint": {
+    "message": "Optional when the proxy manages upstream credentials."
+  },
+  "connectionModeDirectHint": {
+    "message": "The extension sends requests directly to your API. An API key is required."
+  },
+  "connectionModeProxyHint": {
+    "message": "Connect to your own OpenAI-compatible proxy. Set its API base URL and provide an API key if it requires one."
+  },
+  "customHeaders": {
+    "message": "Custom HTTP headers"
+  },
+  "customHeadersHint": {
+    "message": "Optional headers sent with every API request. They stay on this device. API key Authorization takes precedence."
+  },
+  "customHeadersEmpty": {
+    "message": "No custom headers yet. Click “Add header” to create one."
+  },
+  "customHeadersInvalid": {
+    "message": "Please check header names and values. Names must be unique and filled when a value is set."
+  },
+  "addHeader": {
+    "message": "Add header"
+  },
+  "headerName": {
+    "message": "Header name"
+  },
+  "headerValue": {
+    "message": "Value"
+  },
+  "headerValuePlaceholder": {
+    "message": "Header value"
+  },
+  "removeHeader": {
+    "message": "Remove"
+  },
+  "translationMode": {
+    "message": "Translation mode"
+  },
+  "maxConcurrent": {"message": "Max Concurrent Batches"},
+  "batchSize": {"message": "Segments per Batch"},
+  "maxConcurrentHint": {
+    "message": "Default 3. Higher values finish long pages faster but may trigger API rate limits or timeouts."
+  },
+  "batchSizeHint": {
+    "message": "Default 6. Smaller batches return faster; larger batches save API calls but increase the risk of malformed JSON responses."
+  },
+  "providerPreset": {
+    "message": "Provider preset"
+  },
+  "presetLocalApi": {
+    "message": "Local API"
+  },
+  "presetLocalApiHint": {
+    "message": "Uses your local server. Base URL should end with /v1. API key is usually optional."
+  },
+  "presetDeepSeek": {
+    "message": "DeepSeek"
+  },
+  "presetDeepSeekHint": {
+    "message": "Direct DeepSeek API. Requires an API key."
+  },
+  "presetOpenAI": {
+    "message": "OpenAI API"
+  },
+  "presetOpenAIHint": {
+    "message": "OpenAI or any compatible /v1 endpoint. Requires an API key."
+  },
+  "presetOllama": {
+    "message": "Ollama (local)"
+  },
+  "presetOllamaHint": {
+    "message": "Local Ollama OpenAI-compatible API. Key usually optional."
+  },
+  "presetCustom": {
+    "message": "Custom"
+  },
+  "presetCustomHint": {
+    "message": "Enter any OpenAI-compatible base URL manually."
+  },
+  "testConnection": {
+    "message": "Test connection"
+  },
+  "fixV1": {
+    "message": "Add /v1 to URL"
+  },
+  "connTesting": {
+    "message": "Testing connection…"
+  },
+  "connOk": {
+    "message": "Connected"
+  },
+  "connOkMs": {
+    "message": "Connected ($1 ms)"
+  },
+  "connV1Fixed": {
+    "message": "Updated URL to include /v1. Test again."
+  },
+  "connConfigRequired": {
+    "message": "Add an API base URL and key."
+  },
+  "connPermissionRequired": {
+    "message": "Browser permission for this API host was denied."
+  },
+  "connEndpointInsecure": {
+    "message": "Remote endpoints must use HTTPS."
+  },
+  "connAuthInvalid": {
+    "message": "API key rejected (unauthorized)."
+  },
+  "connModelNotFound": {
+    "message": "Model not found or endpoint path is wrong."
+  },
+  "connRateLimited": {
+    "message": "Rate limited. Try again shortly."
+  },
+  "connTimeout": {
+    "message": "Connection timed out."
+  },
+  "connUnavailable": {
+    "message": "Upstream server unavailable."
+  },
+  "connMalformed": {
+    "message": "Got a response, but it was not usable."
+  },
+  "connMissingV1": {
+    "message": "This looks like a server root. Add /v1 to the API base URL."
+  },
+  "connNetworkError": {
+    "message": "Could not reach the API. Check the URL and that the server is running."
+  },
+  "errConfigRequired": {
+    "message": "Connect an API before translating."
+  },
+  "errPermissionRequired": {
+    "message": "Browser permission for this API host was denied."
+  },
+  "errEndpointInsecure": {
+    "message": "Remote endpoints must use HTTPS."
+  },
+  "errAuthInvalid": {
+    "message": "API key rejected."
+  },
+  "errModelNotFound": {
+    "message": "Model not found or endpoint path is wrong."
+  },
+  "errRateLimited": {
+    "message": "Rate limited. Try again shortly."
+  },
+  "errTimeout": {
+    "message": "Translation timed out."
+  },
+  "errUnavailable": {
+    "message": "Translation service unavailable."
+  },
+  "errMalformed": {
+    "message": "Got a response, but it was not usable."
+  },
+  "errPageRestricted": {
+    "message": "This page type cannot be translated (browser-restricted)."
+  },
+  "errPageUnsupported": {
+    "message": "This page is not available for translation."
+  },
+  "errSessionCancelled": {
+    "message": "Translation was cancelled."
+  },
+  "errMissingV1": {
+    "message": "API base URL is missing /v1."
+  },
+  "errNetwork": {
+    "message": "Could not reach the API."
+  },
+  "errUnknown": {
+    "message": "Translation failed."
+  },
+  "errActionOpenSetup": {
+    "message": "Open setup to connect an API."
+  },
+  "errActionGrantPermission": {
+    "message": "Allow access to the API host, then retry."
+  },
+  "errActionUseHttps": {
+    "message": "Switch the API base to HTTPS."
+  },
+  "errActionCheckKey": {
+    "message": "Check your API key in Options."
+  },
+  "errActionCheckModel": {
+    "message": "Check the model name and /v1 path."
+  },
+  "errActionWaitRetry": {
+    "message": "Wait a moment, then retry from the popup."
+  },
+  "errActionRetry": {
+    "message": "Retry from the popup."
+  },
+  "errActionFixV1": {
+    "message": "Add /v1 to the API base URL."
+  },
+  "statusConfigRequired": {
+    "message": "Connect an API before translating"
+  },
+  "statusSiteDisabled": {
+    "message": "This site is disabled in TapTranslate"
+  },
+  "statusPartial": {
+    "message": "$1 translated, $2 failed"
+  },
+  "stopTranslate": {
+    "message": "Stop"
+  },
+  "retryFailed": {
+    "message": "Retry failed"
+  },
+  "openSetup": {
+    "message": "Set up connection"
+  },
+  "onboardingTitle": {
+    "message": "Welcome to TapTranslate"
+  },
+  "onboardingSubtitle": {
+    "message": "Three short steps to your first bilingual page."
+  },
+  "onboardStep1Title": {
+    "message": "Choose a connection route"
+  },
+  "onboardStep1Hint": {
+    "message": "Direct APIs and custom proxies use the same OpenAI-compatible protocol. Page text is sent only to the endpoint you configure."
+  },
+  "onboardPathServer": {
+    "message": "Local API"
+  },
+  "onboardPathServerDesc": {
+    "message": "Uses your local server. Base URL should end with /v1. API key is usually optional."
+  },
+  "onboardPathDirect": {
+    "message": "My AI API (DeepSeek / OpenAI-compatible)"
+  },
+  "onboardPathDirectDesc": {
+    "message": "Text goes to your configured cloud or self-hosted model. Requires an API key."
+  },
+  "onboardPathLater": {
+    "message": "Skip for now"
+  },
+  "onboardPathLaterDesc": {
+    "message": "Browse the options later. Translation stays disabled until you connect."
+  },
+  "onboardStep2Title": {
+    "message": "Connect and test"
+  },
+  "onboardStep2Hint": {
+    "message": "Fill in the endpoint, then run a tiny test translation."
+  },
+  "onboardStep3Title": {
+    "message": "Privacy"
+  },
+  "onboardPrivacy1": {
+    "message": "Visible page text you translate is sent to the API base above."
+  },
+  "onboardPrivacy2": {
+    "message": "Your API key stays in this browser. Extension storage is not encrypted."
+  },
+  "onboardPrivacy3": {
+    "message": "TapTranslate does not operate a translation cloud of its own."
+  },
+  "rememberApiKey": {
+    "message": "Remember API key on this device"
+  },
+  "rememberApiKeyHint": {
+    "message": "Uncheck to keep the key only for this browser session."
+  },
+  "onboardContinue": {
+    "message": "Continue"
+  },
+  "onboardBack": {
+    "message": "Back"
+  },
+  "onboardFinish": {
+    "message": "Start translating"
+  },
+  "progressLabel": {
+    "message": "Translation progress"
+  },
+  "optionsNavLabel": {
+    "message": "Settings sections"
+  },
+  "navConnection": {"message": "Services"},
+  "navReading": {
+    "message": "Reading"
+  },
+  "navSites": {
+    "message": "Sites"
+  },
+  "navData": {"message": "Data"},
+  "sectionConnection": {
+    "message": "Connection"
+  },
+  "sectionReading": {
+    "message": "Translation & display"
+  },
+  "sectionReadingHint": {
+    "message": "Choose interface and translation defaults for new pages. Site rules can override translation defaults."
+  },
+  "sectionSites": {
+    "message": "Sites"
+  },
+  "sectionData": {
+    "message": "Data & privacy"
+  },
+  "sectionDataHint": {
+    "message": "Translated text goes only to your configured API. API keys and custom headers stay on this device; non-secret preferences may sync with your browser account."
+  },
+  "sectionImportExport": {
+    "message": "Import / export"
+  },
+  "advancedConnection": {
+    "message": "Advanced: custom HTTP headers"
+  },
+  "advancedReading": {
+    "message": "Advanced: scheduling"
+  },
+  "advancedReadingHint": {
+    "message": "Leave defaults unless you hit rate limits or timeouts."
+  },
+  "uiLocale": {
+    "message": "Interface language"
+  },
+  "siteRulesHintCards": {
+    "message": "Use one exact hostname per rule. Auto-translate asks for site access when you save; never translate takes precedence."
+  },
+  "sitePolicy": {
+    "message": "Site policy"
+  },
+  "sitePolicyGlobal": {
+    "message": "Use global settings"
+  },
+  "sitePolicyAuto": {
+    "message": "Auto-translate"
+  },
+  "sitePolicyNever": {
+    "message": "Never translate"
+  },
+  "siteUseGlobal": {
+    "message": "Use global default"
+  },
+  "removeSite": {
+    "message": "Remove"
+  },
+  "discardChanges": {
+    "message": "Discard changes"
+  },
+  "unsavedChanges": {
+    "message": "Unsaved changes"
+  },
+  "discarded": {
+    "message": "Changes discarded"
+  },
+  "confirmClearCache": {
+    "message": "Clear all cached translations on this device?"
+  },
+  "confirmExportSecrets": {
+    "message": "This export includes your API key. Save it only somewhere private. Continue?"
+  },
+  "apiBasePlaceholder": {
+    "message": "https://api.deepseek.com"
+  },
+  "apiKeyPlaceholder": {
+    "message": "sk-..."
+  },
+  "modelPlaceholder": {
+    "message": "deepseek-v4-flash"
+  },
+  "connectionNotConfigured": {
+    "message": "Connection required"
+  },
+  "connectionNotConfiguredHint": {
+    "message": "Add your API details, then test and save the connection before translating."
+  },
+  "uiLanguageEn": {"message": "English"},
+  "uiLanguageZhCN": {"message": "Simplified Chinese"},
+  "uiLanguageZhTW": {"message": "Traditional Chinese"},
+  "uiLanguageRu": {"message": "Russian"},
+  "uiLanguageEs": {"message": "Spanish"},
+  "uiLanguageFr": {"message": "French"},
+  "uiLocaleHint": {
+    "message": "This changes extension pages and in-page controls. The browser controls the extension name shown in its own UI."
+  },
+  "targetLanguageZhCN": {"message": "Simplified Chinese"},
+  "targetLanguageEn": {"message": "English"},
+  "targetLanguageRu": {"message": "Russian"},
+  "targetLanguageEs": {"message": "Spanish"},
+  "targetLanguageFr": {"message": "French"},
+  "targetLanguageHint": {
+    "message": "This is the language translated page text will use; it does not change the extension interface."
+  },
+  "translationModeHint": {
+    "message": "Bilingual keeps the original and adds a translation. Replace hides the original until you restore it."
+  },
+  "restoreScheduleDefaults": {"message": "Restore scheduling defaults"},
+  "siteHostHint": {"message": "Use one exact hostname, such as example.com. Paths, ports, and wildcards are not supported."},
+  "errApiBaseRequired": {"message": "Enter an API base URL."},
+  "errApiBaseInvalid": {"message": "Enter a valid API base URL."},
+  "errSiteHostRequired": {"message": "Enter a hostname for every site rule."},
+  "errSiteHostInvalid": {"message": "Use an exact hostname without a path, port, or wildcard."},
+  "errSiteHostDuplicate": {"message": "Each site rule needs a different hostname."},
+  "errSchedulingRange": {"message": "Enter a whole number from $1 to $2."},
+  "sitePermissionDenied": {"message": "Site access was not granted, so auto-translate was not enabled."},
+  "privacyTextDestination": {"message": "Visible page text is sent only to the API endpoint you configure."},
+  "privacySecretsLocal": {"message": "API keys and custom HTTP headers stay on this device and are not browser-synced."},
+  "privacyNoCloud": {"message": "TapTranslate does not operate a translation cloud of its own."},
+  "includeCustomHeaders": {"message": "Include custom HTTP headers in export"},
+  "exportPrivacyHint": {"message": "API keys and custom headers can grant access to your provider. They are excluded unless you explicitly include them."},
+  "confirmExportCustomHeaders": {"message": "This export includes custom HTTP headers, which may contain credentials. Save it only somewhere private. Continue?"},
+  "importPreviewTitle": {"message": "Review imported settings"},
+  "importPreviewSummary": {"message": "Only the listed values will change. Private values that are not listed stay on this device."},
+  "importWillUpdate": {"message": "Update: $1"},
+  "importWillKeep": {"message": "Keep unchanged: $1"},
+  "confirmImport": {"message": "Import settings"},
+  "confirmImportOverwrite": {"message": "Import the listed settings? Existing private values that are absent from the file will stay unchanged."},
+  "cancel": {"message": "Cancel"},
+  "presetGroupLocal": {"message": "Local services"},
+  "presetGroupCloud": {"message": "Cloud providers"},
+  "presetGroupCompatible": {"message": "Compatible or custom endpoints"},
+  "sitePolicyPopupHint": {"message": "Auto-translate needs permission for this site."},
+  "openSettings": {"message": "Settings"},
+  "onboardingStepsLabel": {"message": "Setup progress"},
+  "statusTranslatedItems_one": {"message": "$1 segment translated"},
+  "statusTranslatedItems_other": {"message": "$1 segments translated"},
+  "presetMiniMax": {"message": "MiniMax"},
+  "presetMiniMaxHint": {"message": "Direct MiniMax OpenAI-compatible API. Uses MiniMax-M3 by default and requires an API key."},
+  "presetSiliconFlow": {"message": "SiliconFlow"},
+  "presetSiliconFlowHint": {"message": "Direct SiliconFlow OpenAI-compatible API. Uses DeepSeek-V4-Flash by default and requires an API key."},
+  "translationServices": {"message": "Translation services"},
+  "servicesHint": {"message": "Add providers and configure each model independently. Select a model, then use it as the translation default."},
+  "providersAndModels": {"message": "Providers & models"},
+  "addProvider": {"message": "+ Add provider"},
+  "providerName": {"message": "Provider name"},
+  "directApi": {"message": "Direct API"},
+  "serviceCount": {"message": "$1 providers"},
+  "defaultModel": {"message": "Default"},
+  "activeService": {"message": "Translation default: $1 · $2"},
+  "useModel": {"message": "Use for translation"},
+  "newProvider": {"message": "New provider"},
+  "newModel": {"message": "New model"},
+  "addModel": {"message": "+ Add model"},
+  "modelParameters": {"message": "Model Parameters"},
+  "modelParametersHint": {"message": "Each model keeps its own parameters. Availability depends on your API."},
+  "temperatureHint": {"message": "Lower values make translations more consistent."},
+  "maxTokens": {"message": "Max Output Tokens"},
+  "maxTokensHint": {"message": "Leave empty to estimate the budget for each batch."},
+  "automatic": {"message": "Auto"},
+  "reasoningEffort": {"message": "Reasoning Effort"},
+  "effortLow": {"message": "Low"},
+  "effortMedium": {"message": "Medium"},
+  "effortHigh": {"message": "High"},
+  "frequencyPenalty": {"message": "Frequency Penalty"},
+  "presencePenalty": {"message": "Presence Penalty"},
+  "thinkingMode": {"message": "Thinking Mode"},
+  "enabled": {"message": "Enabled"},
+  "disabled": {"message": "Disabled"},
+  "tokenLimitField": {"message": "Token Limit Field"},
+  "translationInstructions": {"message": "Additional Instructions"},
+  "translationInstructionsPlaceholder": {"message": "Use terminology appropriate for academic papers…"},
+  "translationInstructionsHint": {"message": "Appended to the translation prompt; the JSON output format is kept."},
+  "resetModelParameters": {"message": "Restore model defaults"},
+  "removeModel": {"message": "Delete model"},
+  "removeProvider": {"message": "Delete provider"},
+  "addProviderTitle": {"message": "Add a translation provider"},
+  "addProviderHint": {"message": "Choose a preset or add any OpenAI-compatible API."},
+  "close": {"message": "Close"},
+  "serviceConfigurationInvalid": {"message": "Invalid service configuration: $1"},
+  "presetArkAgentPlan": {"message": "Volcengine Ark Agent Plan"},
+  "presetArkAgentPlanHint": {"message": "OpenAI-compatible Agent Plan API, using ark-code-latest by default. Requires a dedicated Agent Plan API key, not a standard Ark API key."},
+  "effortXhigh": {"message": "Extra high"},
+  "effortMax": {"message": "Maximum"},
+  "thinkingAdapter": {"message": "Thinking API mapping"},
+  "thinkingAdapterAuto": {"message": "Built-in compatibility"},
+  "thinkingAdapterCustom": {"message": "Custom for this model"},
+  "thinkingEnabledBody": {"message": "Parameters when enabled (JSON)"},
+  "thinkingDisabledBody": {"message": "Parameters when disabled (JSON)"},
+  "thinkingCustomHelp": {"message": "Enter request JSON for each action. Use null for an unsupported action and {} to send no fields. Top-level null values remove fields. Custom automatic mode sends no thinking controls; set effort inside these JSON objects. Do not put credentials here: mappings are included in settings exports."},
+  "thinkingJsonInvalid": {"message": "Use a JSON object or null (up to 4096 characters). Model, messages, streaming, tools, token limits and prototype keys cannot be overridden."},
+  "thinkingGenericHint": {"message": "Unrecognized model: Automatic uses API defaults. Explicit on/off uses thinking.type = enabled/disabled; customize if your API differs."},
+  "thinkingDeepSeekHint": {"message": "DeepSeek: Automatic disables thinking for translation. Enable it to adjust reasoning effort."},
+  "thinkingM3Hint": {"message": "MiniMax M3: Automatic disables thinking for translation. Enabling uses adaptive; reasoning effort is not supported."},
+  "thinkingFlashHint": {"message": "MiniMax M3.1 Flash Preview always thinks. It cannot be disabled. Effort: low / medium / high / xhigh / max; Automatic uses the API default max."},
+  "thinkingCustomHint": {"message": "Custom mapping replaces built-in thinking and effort controls. Automatic sends neither action; API defaults apply."},
+  "thinkingCannotEnable": {"message": "This model mapping does not support enabling thinking. Choose Automatic or change the mapping."},
+  "thinkingCannotDisable": {"message": "This model cannot disable thinking. Choose Automatic / Enabled, or customize for a gateway with different capabilities."},
+  "thinkingEffortUnsupported": {"message": "This reasoning effort is not supported by the selected mapping. Choose Automatic or a supported level."},
+  "errModelParametersInvalid": {"message": "The model thinking settings are incompatible. Open settings and correct the thinking mode or API mapping."},
+  "minimalServicesHint": {"message": "Choose a model and add your key to start translating."},
+  "currentModel": {"message": "Current model"},
+  "modelAdvanced": {"message": "Advanced settings"},
+  "customHeadersTitle": {"message": "Custom headers"},
+  "minimalReadingHint": {"message": "Choose your language and reading style."},
+  "minimalSitesHint": {"message": "Set translation preferences for specific websites."},
+  "onboardingSimpleTitle": {"message": "Connect a translation service"},
+  "onboardingSimpleHint": {"message": "Choose a service, add your key, and start reading."},
+  "connectionOptions": {"message": "Connection options"},
+  "onboardingSaveStart": {"message": "Save and start"},
+  "popupSitePreferences": {"message": "Site preferences"},
+  "simpleService": {"message": "Service"},
+  "translateTo": {"message": "Translate to"},
+  "displayStyle": {"message": "Display mode"},
+  "contentRules": {"message": "Content adaptation"},
+  "contentHelp": {"message": "One CSS selector per line; blank and duplicate lines are removed. Only this exact hostname is edited. Save to use these rules the next time you start translation."},
+  "contentSelectors": {"message": "Content selectors"},
+  "ignoreSelectors": {"message": "Excluded selectors"},
+  "contentSource": {"message": "Rule source"},
+  "contentInheritBuiltin": {"message": "Use built-in rules"},
+  "contentInheritGeneric": {"message": "Use generic rules"},
+  "contentCustom": {"message": "Custom"},
+  "contentEmptyHint": {"message": "An empty custom list collects no content. Restore defaults to inherit."},
+  "ignoreEmptyHint": {"message": "An empty custom list removes site exclusions; universal protections remain."},
+  "contentEmpty": {"message": "No content will be collected."},
+  "ignoreEmpty": {"message": "No site-specific exclusions."},
+  "contentGeneric": {"message": "Generic page collection."},
+  "contentResetField": {"message": "Restore field default"},
+  "contentResetAll": {"message": "Restore all content defaults"},
+  "contentEffective": {"message": "Effective rules"},
+  "contentProtections": {"message": "Always protected: code, native controls, editable areas, translate=no, notranslate, and TapTranslate elements. Exclusions take precedence over content selectors."},
+  "contentBuiltinSites": {"message": "Built-in sites"},
+  "contentCustomSites": {"message": "Custom sites"},
+  "contentCheck": {"message": "Check current webpage"},
+  "contentCheckHelp": {"message": "Read-only: uses this draft and counts matching elements, not translation units. If Settings is the active tab, checks the most recently visited other tab in this window. No page text is sent or saved."},
+  "contentCheckResult": {"message": "$1 — element match counts (not translation units)"},
+  "contentSyntaxError": {"message": "Invalid CSS in $1, line $2."},
+  "contentLimitError": {"message": "$1, line $2: invalid rule or limit exceeded. Maximum 200 hosts, 100 lines per field, 2,048 characters per selector, and 256 KiB total."},
+  "contentSaveError": {"message": "Could not save: $1. Your draft is retained."},
+  "CHECK_HOST_MISMATCH": {"message": "The current webpage hostname does not match the domain being edited. Visit that domain and return to Settings."},
+  "CHECK_UNSUPPORTED": {"message": "This page cannot be checked. Use a regular HTTP(S) webpage; browser and extension pages are unsupported."},
+  "CHECK_PERMISSION": {"message": "Site access was not granted. Your draft is unchanged."},
+  "CHECK_UNAVAILABLE": {"message": "Could not check the webpage. It may have navigated or be unavailable."},
+  "workspaceNewSite": {"message": "New site"},
+  "workspaceHostCount": {"message": "$1 independent hostnames"},
+  "workspaceNoMatches": {"message": "No matching sites"},
+  "workspaceBackSites": {"message": "← Sites"},
+  "workspaceBackServices": {"message": "← Services"},
+  "workspaceSearchSites": {"message": "Search sites or hostnames"},
+  "workspacePreferences": {"message": "Translation preferences"},
+  "workspaceSitesHint": {"message": "Select a site to edit its translation preferences and content rules."},
+  "workspaceSaveHint": {"message": "Save all changes. New rules apply the next time translation starts."},
+  "workspaceBasicSettings": {"message": "Basic settings"}
+}

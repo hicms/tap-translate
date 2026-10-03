@@ -1,0 +1,52 @@
+span.tap-translate-loading {
+  all: initial !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-inline-start: 6px !important;
+  vertical-align: baseline !important;
+  color: inherit !important;
+  font: 400 12px/1.4 system-ui, sans-serif !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+span.tap-translate-loading::before {
+  content: '' !important;
+  position: static !important;
+  display: inline-block !important;
+  box-sizing: border-box !important;
+  flex: 0 0 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  border: 1.5px solid currentColor !important;
+  border-right-color: transparent !important;
+  border-radius: 50% !important;
+  opacity: 0.7 !important;
+  animation: tap-translate-loading-spin 0.8s linear infinite !important;
+}
+
+span.tap-translate-loading[data-phase='queued']::before {
+  animation: none !important;
+  border-right-color: currentColor !important;
+  opacity: 0.45 !important;
+}
+
+span.tap-translate-loading::after {
+  content: none !important;
+}
+
+span.tap-translate-loading[data-phase='retrying']::after {
+  content: attr(aria-label) !important;
+}
+
+@keyframes tap-translate-loading-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  span.tap-translate-loading::before { animation: none !important; }
+  span.tap-translate-loading::after { content: attr(aria-label) !important; }
+}

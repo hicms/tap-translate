@@ -1,0 +1,22 @@
+@import '../ui.css';
+body { width: 340px; min-height: 380px; padding: 20px; }
+.popup-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+.popup-header .brand { gap: 10px; }
+.popup-header img { width: 28px; height: 28px; }
+.popup-header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+#optionsLink { font-size: 13px; }
+.status-row { display: grid; gap: 4px; margin-bottom: 24px; }
+#statusText { font-size: 14px; font-weight: 500; }
+#countText { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+#countText:empty { display: none; }
+.control-group { margin-bottom: 20px; }
+.button-row button { width: 100%; min-height: 44px; }
+.secondary-row { margin-top: 10px; }
+#sitePreferences { border-top: 1px solid var(--border); margin-top: 24px; }
+#sitePreferences summary { font-size: 13px; padding-bottom: 0; }
+#sitePreferences[open] summary { padding-bottom: 20px; }
+#sitePreferences .control-group { margin-bottom: 0; }
+#sitePolicySummary { display: block; padding-left: 24px; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+#sitePolicySummary:empty { display: none; }
+.progress { height: 4px; margin: -12px 0 20px; overflow: hidden; border-radius: 4px; background: var(--border); }
+.progress-bar { width: 0; height: 100%; background: var(--primary); transition: width .2s ease; }
