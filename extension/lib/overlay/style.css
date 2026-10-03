@@ -1,0 +1,73 @@
+:host {
+  all: initial;
+  color-scheme: light dark;
+}
+.dr-theme {
+  font:
+    14px/1.5 system-ui,
+    'Microsoft YaHei',
+    sans-serif;
+  color-scheme: light dark;
+}
+.dr-panel {
+  position: fixed;
+  box-sizing: border-box;
+  width: 360px;
+  overflow: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 8px 32px #0003;
+  font: inherit;
+}
+.dr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dr-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.dr-actions {
+  display: flex;
+  gap: 4px;
+}
+.dr-original {
+  margin: 0 0 10px;
+  max-height: 72px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.dr-body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dr-loading {
+  color: var(--color-text-secondary);
+}
+.dr-error {
+  color: var(--color-text-red);
+}
+@media (prefers-contrast: more) {
+  .dr-panel {
+    border-width: 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

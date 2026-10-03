@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { hideOverlay, showLoading, showResult } from '../lib/overlay';
+import { hideOverlay, showError, showLoading, showResult } from '../lib/overlay';
 
 const labels = { title: 'TapTranslate', copy: 'Copy', close: 'Close' };
 
@@ -77,6 +77,10 @@ describe('selection overlay', () => {
     try {
       showLoading('short-lived selection', labels);
       hideOverlay();
+      // Astryx installs and tears down its own immediate keyboard-modality
+      // listeners. No deferred overlay dismissal listener may attach later.
+      expect(addListener.mock.calls.map(([type]) => type)).not.toContain('mousedown');
+      addListener.mockClear();
       vi.runAllTimers();
 
       const eventTypes = addListener.mock.calls.map(([type]) => type);
@@ -86,5 +90,27 @@ describe('selection overlay', () => {
     } finally {
       addListener.mockRestore();
     }
+  });
+
+  it('escapes text, copies results, isolates theme attributes and restores keyboard focus', () => {
+    vi.useFakeTimers();
+    const trigger = document.createElement('button'); document.body.append(trigger); trigger.focus();
+    window.getSelection()?.removeAllRanges();
+    const attrs = document.documentElement.getAttributeNames().map(name => [name, document.documentElement.getAttribute(name)]);
+    const copy = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: copy } });
+    showResult('<img src=x onerror=alert(1)>', '<script>hello</script>', labels);
+    const shadow = document.getElementById('tap-translate-overlay-host')!.shadowRoot!;
+    expect(shadow.querySelector('img,script')).toBeNull();
+    shadow.querySelector<HTMLButtonElement>('.dr-btn')!.click();
+    expect(copy).toHaveBeenCalledWith('<script>hello</script>');
+    expect(document.documentElement.getAttributeNames().map(name => [name, document.documentElement.getAttribute(name)])).toEqual(attrs);
+    expect(document.head.querySelector('[data-astryx-theme]')).toBeNull();
+    showError('source', 'failed', labels);
+    expect(shadow.querySelector<HTMLButtonElement>('.dr-btn')!.disabled).toBe(true);
+    vi.advanceTimersByTime(1);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.getElementById('tap-translate-overlay-host')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 });

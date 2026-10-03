@@ -1,0 +1,244 @@
+@import '@astryxdesign/core/reset.css';
+@import '@astryxdesign/core/astryx.css';
+@import '@astryxdesign/theme-neutral/theme.css';
+
+:root {
+  font-family: system-ui, 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  color-scheme: light dark;
+}
+body {
+  margin: 0;
+  color: var(--color-text-primary);
+  background: var(--color-background-body);
+  font: inherit;
+}
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+#root {
+  min-height: 100dvh;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1,
+h2 {
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+}
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.field {
+  min-width: 0;
+  margin-bottom: 20px;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+.native-control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 12px;
+  font: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-background-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element, 8px);
+}
+textarea.native-control {
+  resize: vertical;
+  line-height: 1.5;
+}
+select.native-control {
+  padding-right: 26px;
+}
+.native-control:disabled {
+  opacity: 0.65;
+}
+.native-control[aria-invalid='true'],
+.is-invalid .native-control {
+  border-color: var(--color-text-red);
+}
+.native-control:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.hint {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand img {
+  width: 32px;
+  height: 32px;
+}
+.brand strong {
+  font-size: 19px;
+  letter-spacing: -0.03em;
+}
+.actions,
+.actions-inline,
+.section-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.section-head-row {
+  justify-content: space-between;
+}
+.section-head-row h2,
+.section-head-row h3 {
+  margin-bottom: 0;
+}
+.is-error,
+.thinking-error,
+.content-error {
+  color: var(--color-text-red);
+}
+.is-ok {
+  color: var(--color-text-green);
+}
+.save-status,
+.test-status {
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  padding: 16px 0;
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+dialog {
+  width: min(540px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  color: var(--color-text-primary);
+  background: var(--color-background-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+dialog::backdrop {
+  background: #1118;
+}
+dialog h2 {
+  font-size: 21px;
+}
+dialog .actions {
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+.provider-picker {
+  position: relative;
+}
+.provider-picker-trigger {
+  width: 100%;
+  justify-content: flex-start;
+}
+.provider-picker-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.provider-picker-menu {
+  position: absolute;
+  z-index: 10;
+  inset: calc(100% + 6px) 0 auto;
+  max-height: 340px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-background-surface);
+  box-shadow: var(--shadow-med);
+}
+.provider-picker-group {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.provider-picker-option {
+  width: 100%;
+  height: auto !important;
+  min-height: 52px;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+}
+.provider-picker-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.provider-picker-copy small {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+.provider-picker-inline .provider-picker-menu {
+  position: static;
+  border: 0;
+  box-shadow: none;
+  max-height: none;
+  padding: 0;
+}
+@media (max-width: 560px) {
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

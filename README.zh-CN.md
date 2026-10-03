@@ -71,13 +71,18 @@ tap-translate/
 
 ## 架构概览
 
-基于 TypeScript + WXT（Manifest V3），界面使用原生 DOM，不包含独立后端服务。
+基于 TypeScript + WXT（Manifest V3），界面使用 React 19 + [Astryx](https://github.com/facebook/astryx)，不包含独立后端服务。
 
-- **扩展页面**（`entrypoints/popup`、`options`、`onboarding`）：提供翻译控制和配置界面。
+- **扩展页面**（`entrypoints/popup`、`options`、`onboarding`）：采用 React 组件，复用 `ui/` 中的 Astryx 控件和主题。设置页独立维护供应商、模型及站点的编辑草稿，校验后仅保存变化字段。
+- **划词浮层**（`lib/overlay`）：在隔离的 ShadowRoot 内挂载 React + Astryx。字体、脚本和样式均来自本地，扩展主题不会改动网页样式。
 - **内容脚本**（`entrypoints/tap-translate.ts`）：每个 frame 独立运行会话；`collector` + `sites` 识别正文，`scheduler` 管理视口队列和重试，`renderer` 展示译文或恢复原文。
 - **扩展后台**（`entrypoints/background.ts`）：通过 `runtime.Port` 接收未命中缓存的批次，统一限制跨标签页并发，由 `provider` 调用用户配置的 API。
 
 翻译链路：采集 → 视口队列 → 内存/本地缓存 → 后台 API 请求 → 渲染。站点规则及扩展方式见[站点适配文档](docs/SITE-ADAPTERS.md)。
+
+网页中的行内译文仍由页面渲染器管理；内容脚本按需注入，后台处理不加载 React。Astryx 使用预构建 CSS 和 neutral 主题，无需额外的 StyleX 编译步骤。
+
+为保留 Firefox 140 兼容性，构建时通过 `tools/astryx-theme.ts` 将 neutral 主题的 CSS scope 转为主题选择器；每个扩展页面或浮层使用单一主题。
 
 ## 快速开始
 

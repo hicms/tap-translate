@@ -47,7 +47,8 @@ export const extTest = base.extend<{
         context.close().catch(() => undefined),
         new Promise((r) => setTimeout(r, 3_000)),
       ]);
-      fs.rmSync(userDataDir, { recursive: true, force: true });
+      // Windows can retain a profile handle briefly after context.close().
+      fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   },
   sw: async ({ extContext }, use) => {

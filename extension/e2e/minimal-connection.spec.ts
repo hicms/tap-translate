@@ -168,7 +168,7 @@ test('onboarding tests and saves the same model parameters, preserves other wind
     await page.goto(`chrome-extension://${extensionId}/onboarding.html`);
     await expect(page.locator('#apiKey')).toBeEnabled();
     await page.locator('#apiKey').fill('only-this-session');
-    await page.locator('#rememberKey').uncheck();
+    await page.locator('#rememberKey input').uncheck();
     await screenshot(page, 'minimal-onboarding-desktop.png');
     await accessible(page);
     await page.setViewportSize({ width: 390, height: 844 });

@@ -1,7 +1,8 @@
-import { test, expect, firefox } from '@playwright/test';
+import { test, expect, firefox, type BrowserContext } from '@playwright/test';
 import { withExtension } from 'playwright-webextext';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { artifactPath } from '../tools/artifact-paths.mjs';
 import { startMockServer } from './helpers/mock-server';
 import {
@@ -35,16 +36,25 @@ test.describe('firefox extension load', () => {
   });
 
   test('loads temporary addon and browses without crash', async () => {
-    // launch() (not persistent) avoids a playwright-webextext bug when the MV3
-    // manifest has neither content_scripts nor optional_permissions arrays.
-    const browserType = withExtension(firefox, FIREFOX_EXT);
-    const browser = await browserType.launch({ headless: true });
+    // Use an existing window: onInstalled opens onboarding, which races a
+    // non-persistent browser.newPage() and causes Firefox's "2 tabs" error.
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'tap-translate-ff-smoke-'));
+    const mock = await startMockServer();
+    let context: BrowserContext | undefined;
     try {
-      const page = await browser.newPage();
-      await page.goto('https://example.com/');
-      await expect(page).toHaveTitle(/Example Domain/i);
+      const browserType = withExtension(firefox, FIREFOX_EXT);
+      // The 0.0.5 helper assumes manifest.content_scripts[0] when pre-granting
+      // permissions. Our on-demand extension has none; this smoke needs no
+      // permission overrides. Install the exact production manifest unchanged.
+      Object.assign(browserType, { overridePermissions: async () => {} });
+      context = await browserType.launchPersistentContext(directory, { headless: true });
+      const page = context.pages()[0] ?? await context.newPage();
+      await page.goto(mock.fixtureUrl('article.html'));
+      await expect(page.locator('#title')).toHaveText('Hello World');
     } finally {
-      await browser.close();
+      await context?.close();
+      await mock.close();
+      fs.rmSync(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 });

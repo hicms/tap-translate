@@ -170,7 +170,7 @@ test.describe('provider and model workbench', () => {
     await showServiceField(options, '#apiKey');
     await options.locator('#apiKey').fill('provider-two-secret');
     await showServiceField(options, '#rememberApiKey');
-    await options.locator('#rememberApiKey').uncheck();
+    await options.locator('#rememberApiKey input').uncheck();
     await chooseModel(options, 1);
     await expect(options.locator('#model')).toHaveValue('research-model');
     await expect(options.locator('#temperature')).toHaveValue('0.75');

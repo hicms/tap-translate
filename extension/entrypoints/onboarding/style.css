@@ -1,21 +1,31 @@
-@import '../ui.css';
-.onboarding { width: min(520px, calc(100% - 40px)); margin: 64px auto 32px; }
-.onboarding .brand { margin-bottom: 40px; }
-h1 { margin-bottom: 12px; }
-.intro { margin-bottom: 32px; }
-fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
-#connectionOptions { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 8px 0 24px; }
-#connectionOptions[open] > summary { margin-bottom: 8px; }
-.remember { margin-bottom: 4px; }
-.privacy { margin: 20px 0 28px; }
-.actions { justify-content: space-between; }
-.actions button { min-width: 0; flex: 1; }
-#testStatus { min-height: 22px; margin: 16px 0; overflow-wrap: anywhere; }
-#openSettings { font-size: 13px; }
+.onboarding {
+  width: min(480px, calc(100% - 40px));
+  margin: 64px auto;
+}
+.onboarding .brand {
+  margin-bottom: 44px;
+}
+.onboarding h1 {
+  margin-bottom: 8px;
+}
+.onboarding .intro {
+  margin-bottom: 28px;
+}
+.onboarding .privacy {
+  margin-bottom: 24px;
+}
+.onboarding .actions {
+  justify-content: space-between;
+}
+.onboarding #testStatus {
+  min-height: 24px;
+  margin: 16px 0;
+}
 @media (max-width: 560px) {
-  .onboarding { margin-top: 28px; }
-  .onboarding .brand { margin-bottom: 28px; }
-  h1 { font-size: 24px; }
-  .actions { flex-wrap: nowrap; }
-  .actions button { min-width: 0; flex: 1; }
+  .onboarding {
+    margin-top: 28px;
+  }
+  .onboarding .brand {
+    margin-bottom: 28px;
+  }
 }

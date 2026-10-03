@@ -37,13 +37,18 @@ The extension translates pages through the API you configure and caches translat
 
 ## Architecture
 
-TypeScript + WXT (Manifest V3), with native DOM UI and no bundled backend.
+TypeScript + WXT (Manifest V3), with React 19 + [Astryx](https://github.com/facebook/astryx) UI and no bundled backend.
 
-- **Extension pages** (`entrypoints/popup`, `options`, `onboarding`) handle controls and configuration.
+- **Extension pages** (`entrypoints/popup`, `options`, `onboarding`) use React components and shared Astryx controls/theme in `ui/`. Options keeps editable provider/model/site drafts separate from validated settings and saves only changed fields.
+- **Selection overlay** (`lib/overlay`) mounts React + Astryx inside an isolated ShadowRoot. All fonts, scripts and styles ship locally; extension themes do not modify host-page styles.
 - **Content script** (`entrypoints/tap-translate.ts`) runs a session per frame: `collector` + `sites` identify text, `scheduler` manages viewport queues and retries, and `renderer` displays translations or restores the page.
 - **Background** (`entrypoints/background.ts`) receives uncached batches through `runtime.Port`, limits concurrency across tabs, and calls the configured API through `provider`.
 
 Translation flow: collect → viewport queue → memory/local cache → background API request → render. See [site adapters](docs/SITE-ADAPTERS.md) for DOM rules and extension points.
+
+Inline translations remain owned by the page renderer. The content script is injected on demand; background processing does not load React. Astryx uses its prebuilt CSS and neutral theme, so no StyleX compilation step is needed.
+
+The build converts the neutral theme's CSS scopes to theme selectors for Firefox 140 compatibility (`tools/astryx-theme.ts`); it assumes one theme per extension page or overlay.
 
 ## Quick start
 

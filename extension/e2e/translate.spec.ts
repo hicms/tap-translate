@@ -224,6 +224,7 @@ test.describe('translate main path', () => {
       const tabId = await getTabId(page, sw);
 
       // Mimic context-menu selectionText after the DOM selection is cleared.
+      const hostAppearance = await page.evaluate(() => ({ attrs: [...document.documentElement.attributes].map(item => [item.name, item.value]), styles: document.querySelectorAll('style,link[rel="stylesheet"]').length, background: getComputedStyle(document.body).backgroundColor }));
       const result = await translateSelectionInTab(sw, tabId, 'Hello World');
       expect(result.success, JSON.stringify(result)).toBeTruthy();
 
@@ -246,6 +247,21 @@ test.describe('translate main path', () => {
       expect(afterSecond.isLoading).toBeFalsy();
       expect(afterSecond.isError).toBeFalsy();
       expect(afterSecond.bodyText.length).toBeGreaterThan(0);
+      expect(await page.evaluate(() => ({ attrs: [...document.documentElement.attributes].map(item => [item.name, item.value]), styles: document.querySelectorAll('style,link[rel="stylesheet"]').length, background: getComputedStyle(document.body).backgroundColor }))).toEqual(hostAppearance);
+      await extContext.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(page.url()).origin });
+      await page.bringToFront();
+      const panel = page.locator('#tap-translate-overlay-host .dr-panel');
+      await expect(panel.locator('.astryx-button')).toHaveCount(2);
+      await panel.locator('.dr-btn').first().click();
+      await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(afterSecond.bodyText);
+      const light = await panel.evaluate(element => getComputedStyle(element).backgroundColor);
+      expect(light).not.toBe('rgba(0, 0, 0, 0)');
+      if (process.env.TAP_TRANSLATE_QA_DIR) await page.screenshot({ path: path.join(process.env.TAP_TRANSLATE_QA_DIR, 'selection-overlay-light.png') });
+      await page.emulateMedia({ colorScheme: 'dark' });
+      await expect.poll(() => panel.evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(light);
+      if (process.env.TAP_TRANSLATE_QA_DIR) await page.screenshot({ path: path.join(process.env.TAP_TRANSLATE_QA_DIR, 'selection-overlay-dark.png') });
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#tap-translate-overlay-host')).toHaveCount(0);
     } finally {
       await mock.close();
     }

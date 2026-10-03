@@ -1,11 +1,16 @@
 import { defineConfig } from 'wxt';
 import { artifactPath } from './tools/artifact-paths.mjs';
+import { astryxThemeCompatibility } from './tools/astryx-theme';
 
 // Single source of truth for the extension version; keep in sync with package.json.
 export default defineConfig({
+  modules: ['@wxt-dev/module-react'],
   srcDir: '.',
   outDir: artifactPath('extension'),
-  vite: () => ({ cacheDir: artifactPath('cache', 'wxt-vite') }),
+  vite: () => ({
+    cacheDir: artifactPath('cache', 'wxt-vite'),
+    css: { postcss: { plugins: [astryxThemeCompatibility()] } },
+  }),
   // Both Chrome and Firefox (109+) run MV3; this keeps a single background +
   // scripting API surface and matches the pre-migration baseline.
   manifestVersion: 3,

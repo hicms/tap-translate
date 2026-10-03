@@ -109,6 +109,12 @@ export function buildChromeShim(): string {
       },
       onMessage: { addListener(fn) { listeners.push(fn); } },
       sendMessage(msg, cb) {
+        if (msg?.action === 'getFrameSessionConfig') {
+          const config = globalThis.__drFrameConfig;
+          const response = config?.sessionId === msg.sessionId ? { config } : {};
+          cb?.(response);
+          return Promise.resolve(response);
+        }
         let replied = false;
         const reply = (r) => { if (!replied) { replied = true; cb?.(r); } };
         for (const fn of listeners) {
@@ -229,6 +235,9 @@ export async function firefoxTranslatePage(
 ): Promise<Record<string, unknown>> {
   const config = sessionConfig(mode);
   return page.evaluate(async (cfg) => {
+    // Mirror the background's sender-host projection in this content-only
+    // harness. The production content script now requires this handshake.
+    Object.assign(globalThis, { __drFrameConfig: { ...cfg, siteContentRule: { host: location.hostname } } });
     const g = (globalThis as {
       __TAP_TRANSLATE__?: {
         handleMessage: (
