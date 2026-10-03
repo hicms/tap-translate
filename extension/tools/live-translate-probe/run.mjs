@@ -17,10 +17,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox } from '@playwright/test';
+import { artifactPath } from '../artifact-paths.mjs';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXT_ROOT = path.resolve(dirname, '../..');
-const OUT_ROOT = path.join(EXT_ROOT, 'test-results/live-translate');
+const OUT_ROOT = artifactPath('live-translate');
 const HEADLESS = process.env.LIVE_HEADLESS !== '0';
 const TIMEOUT_MS = Number(process.env.LIVE_TIMEOUT_MS || 90_000);
 
@@ -58,23 +59,19 @@ function slug(url) {
 }
 
 function loadSettings() {
-  const p = path.join(EXT_ROOT, 'public/dev-settings.json');
-  if (!fs.existsSync(p)) throw new Error('missing public/dev-settings.json');
+  const p = path.join(EXT_ROOT, 'dev-settings.json');
+  if (!fs.existsSync(p)) throw new Error('missing extension/dev-settings.json; copy dev-settings.json.example first');
   const settings = JSON.parse(fs.readFileSync(p, 'utf8'));
   if (!settings.apiKey || !settings.apiBase) throw new Error('dev-settings.json incomplete');
   return settings;
 }
 
 function prepareChromeExtension() {
-  const src = path.join(EXT_ROOT, 'output/chrome-mv3');
-  const dest = path.join(EXT_ROOT, 'output/chrome-mv3-live');
+  const src = artifactPath('extension', 'chrome-mv3');
+  const dest = path.join(OUT_ROOT, 'chrome-extension');
   if (!fs.existsSync(src)) throw new Error(`missing ${src}; run npm run build`);
   fs.rmSync(dest, { recursive: true, force: true });
   fs.cpSync(src, dest, { recursive: true });
-  const settingsPath = path.join(dest, 'dev-settings.json');
-  if (!fs.existsSync(settingsPath)) {
-    fs.copyFileSync(path.join(EXT_ROOT, 'public/dev-settings.json'), settingsPath);
-  }
   const manifestPath = path.join(dest, 'manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   manifest.host_permissions = ['http://localhost/*', 'http://127.0.0.1/*', 'https://*/*', 'http://*/*'];
@@ -547,8 +544,8 @@ async function firefoxPoll(page, timeoutMs) {
 async function runFirefox(sites, settings) {
   const outDir = path.join(OUT_ROOT, 'firefox');
   fs.mkdirSync(outDir, { recursive: true });
-  const css = fs.readFileSync(path.join(EXT_ROOT, 'output/firefox-mv3/tap-translate.css'), 'utf8');
-  const script = fs.readFileSync(path.join(EXT_ROOT, 'output/firefox-mv3/tap-translate.js'), 'utf8');
+  const css = fs.readFileSync(artifactPath('extension', 'firefox-mv3', 'tap-translate.css'), 'utf8');
+  const script = fs.readFileSync(artifactPath('extension', 'firefox-mv3', 'tap-translate.js'), 'utf8');
   const shim = buildFirefoxShim(settings);
 
   console.log(`\n════════ FIREFOX (Gecko + content shim) ════════`);

@@ -3,12 +3,13 @@ set -euo pipefail
 
 # Runs WXT in dev mode with HMR. Usage: dev-extension.sh [chrome|firefox]
 # WXT auto-launches a fresh browser profile with the extension loaded, and
-# also writes an unpacked build to extension/output/<browser>-mv3.
+# also writes an unpacked build to artifacts/extension/<browser>-mv3.
 #
 # Dev settings MUST NOT be copied into public/ — that path is packaged into
 # production artifacts. Seed settings via Options → Import instead.
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXT_DIR="${ROOT_DIR}/extension"
+OUTPUT_DIR="$(node "${EXT_DIR}/tools/artifact-paths.mjs" extension)"
 
 BROWSER="${1:-chrome}"
 case "${BROWSER}" in
@@ -36,9 +37,9 @@ cat <<EOF
   WXT dev mode (HMR) — ${BROWSER}
 
   WXT will auto-open a fresh ${BROWSER} profile with the extension loaded.
-  If it doesn't, load unpacked → extension/output/${OUTPUT}
+  If it doesn't, load unpacked → ${OUTPUT_DIR}/${OUTPUT}
 
-  Tip: copy extension/dev-settings.json.example → a local JSON file, fill
+  Tip: copy extension/dev-settings.json.example → extension/dev-settings.json, fill
   your API key, then import it from the Options page. Do NOT place secrets
   under extension/public/ — they will ship in release zips.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

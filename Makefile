@@ -28,10 +28,11 @@ lint-extension:
 	cd extension && npm run lint
 
 package: build
-	@echo "Packaging complete. Outputs are in dist/"
+	@echo "Packaging complete. Output directory:"
+	@node extension/tools/artifact-paths.mjs extension
 
 clean:
-	rm -rf dist/ extension/output/ extension/.output/
+	node extension/tools/clean-artifacts.mjs
 
 test: test-extension
 

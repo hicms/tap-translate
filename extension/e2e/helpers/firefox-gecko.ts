@@ -13,13 +13,12 @@ import type { BrowserContext, Page } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { artifactPath } from '../../tools/artifact-paths.mjs';
 import { firefox } from '@playwright/test';
 import type { PublicSessionConfigLite } from './ext-control';
 import { inspectTranslation } from './ext-control';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-export const FIREFOX_EXT_PATH = path.resolve(dirname, '../../output/firefox-mv3');
+export const FIREFOX_EXT_PATH = artifactPath('extension', 'firefox-mv3');
 
 export type FirefoxBatchMode = 'ok' | 'auth_fail';
 

@@ -2,7 +2,7 @@ import { test, expect, firefox } from '@playwright/test';
 import { withExtension } from 'playwright-webextext';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { artifactPath } from '../tools/artifact-paths.mjs';
 import { startMockServer } from './helpers/mock-server';
 import {
   FIREFOX_EXT_PATH,
@@ -14,8 +14,7 @@ import {
   inspectTranslation,
 } from './helpers/firefox-gecko';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const FIREFOX_EXT = path.resolve(dirname, '../output/firefox-mv3');
+const FIREFOX_EXT = artifactPath('extension', 'firefox-mv3');
 
 /**
  * Firefox E2E:

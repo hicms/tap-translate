@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXT_DIR="${ROOT_DIR}/extension"
-OUTPUT_DIR="${EXT_DIR}/output"
+OUTPUT_DIR="${ROOT_DIR}/$(node "${EXT_DIR}/tools/artifact-paths.mjs" extension)"
 
 if [[ ! -d "${OUTPUT_DIR}" ]]; then
   echo "[check-artifacts] missing ${OUTPUT_DIR}; run a production build first" >&2
@@ -30,7 +30,7 @@ while IFS= read -r -d '' path; do
   done
 done < <(find "${OUTPUT_DIR}" \( -type f -o -type l \) -print0)
 
-# Zip contents (WXT may place zips under output/)
+# WXT places extension and Firefox source ZIPs beside the unpacked builds.
 while IFS= read -r -d '' zip; do
   if unzip -Z1 "${zip}" 2>/dev/null | grep -E '(^|/)(dev-settings\.json|\.env(\.|$)|credentials\.json)(/|$)' >/dev/null; then
     echo "[check-artifacts] FORBIDDEN entry inside zip: ${zip}" >&2

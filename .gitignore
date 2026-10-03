@@ -1,22 +1,14 @@
-# Build outputs
-/dist/
+# Configurable build outputs, reports and caches
+/artifacts/
 *.zip
 *.tar.gz
 *.tsbuildinfo
 
-# Extension (WXT) build + tooling
+# Tool-managed directories (npm and WXT keep these beside package.json)
 /extension/node_modules/
-/extension/output/
-/extension/.output/
 /extension/.wxt/
-/extension/test-results/
-/extension/playwright-report/
-/extension/blob-report/
-/extension/playwright/.cache/
-/extension/coverage/
 
 # Extension: local-only / never package
-/extension/manifest.json
 /extension/dev-settings.json
 /extension/public/dev-settings.json
 

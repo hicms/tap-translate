@@ -58,14 +58,17 @@ Translation flow: collect → viewport queue → memory/local cache → backgrou
 ```bash
 cd extension
 npm ci
-npm run build              # load output/chrome-mv3
+npm run build              # load ../artifacts/extension/chrome-mv3
 # npm run dev             # development with HMR
 ```
 
-Chrome/Edge: `chrome://extensions` → Load unpacked → `extension/output/chrome-mv3`.  
-Firefox: `npm run build:firefox` → load `extension/output/firefox-mv3` (min Firefox **140**).
+Chrome/Edge: `chrome://extensions` → Load unpacked → `artifacts/extension/chrome-mv3`.
 
-Copy `extension/dev-settings.json.example` for local imports if you like—**never** put secrets under `extension/public/` (that directory is packaged).
+Firefox: `npm run build:firefox` → load `artifacts/extension/firefox-mv3` (min Firefox **140**).
+
+Builds and ZIPs live in `artifacts/extension/`; test results, reports and configurable caches also stay under `artifacts/`. Paths are defined in [artifact-paths.mjs](extension/tools/artifact-paths.mjs); `make clean` (or `cd extension && npm run clean`) removes this directory. npm's `extension/node_modules/` and WXT's fixed `extension/.wxt/` remain in their default locations.
+
+Copy `extension/dev-settings.json.example` to `extension/dev-settings.json` for local imports or live probes—**never** put secrets under `extension/public/` (that directory is packaged).
 
 ---
 

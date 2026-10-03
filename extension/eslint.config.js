@@ -9,12 +9,8 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   {
     ignores: [
-      'output/**',
-      '.output/**',
       '.wxt/**',
       'node_modules/**',
-      'test-results/**',
-      'playwright-report/**',
       'tools/**',
       '**/*.mjs',
       'vitest.config.ts',

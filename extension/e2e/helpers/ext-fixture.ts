@@ -2,10 +2,9 @@ import { test as base, expect, chromium, type BrowserContext, type Worker } from
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { artifactPath } from '../../tools/artifact-paths.mjs';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-export const EXTENSION_PATH = path.resolve(dirname, '../../output/chrome-mv3');
+export const EXTENSION_PATH = artifactPath('extension', 'chrome-mv3');
 
 /**
  * Persistent Chromium context with the built MV3 extension loaded.

@@ -61,8 +61,11 @@ tap-translate/
 │   ├── tests/                 # vitest 单测
 │   └── wxt.config.ts          # 自动生成 Chrome/Firefox MV3 manifest
 ├── scripts/                   # 构建 / 开发脚本
+├── artifacts/                 # 本地产物：extension/、cache/、test-results/、reports/ 等（不提交）
 └── Makefile
 ```
+
+生成路径统一由 [artifact-paths.mjs](extension/tools/artifact-paths.mjs) 管理。npm 的 `extension/node_modules/` 和当前 WXT 固定生成的 `extension/.wxt/` 保留默认位置，均不提交。
 
 ---
 
@@ -100,10 +103,10 @@ tap-translate/
 make dev-extension          # 等价于 cd extension && npm run dev
 ```
 
-在 Chrome / Edge：`chrome://extensions` → **Load unpacked** → 选择 **`extension/output/chrome-mv3`**。
-Firefox：`npm run dev:firefox`，加载 `extension/output/firefox-mv3`。
+在 Chrome / Edge：`chrome://extensions` → **Load unpacked** → 选择 **`artifacts/extension/chrome-mv3`**。
+Firefox：`npm run dev:firefox`，加载 `artifacts/extension/firefox-mv3`。
 
-可选：复制 `extension/dev-settings.json.example` → 本地 JSON，填入 Key 后在扩展 Options 页导入。
+可选：复制 `extension/dev-settings.json.example` → `extension/dev-settings.json`，填入 Key 后在扩展 Options 页导入，也供 live probe 读取。
 **不要**把含密钥的文件放到 `extension/public/`——该目录会进入生产 zip。
 
 **打包 / 发布：**
@@ -114,8 +117,8 @@ make build-extension        # 类型检查 + 构建 + 打包 chrome/firefox
 
 产物：
 
-- `extension/output/chrome-mv3/` · `extension/output/firefox-mv3/`（unpacked）
-- `extension/output/*.zip`（并复制到 `dist/`，用于商店上架 / 侧载）
+- `artifacts/extension/chrome-mv3/` · `artifacts/extension/firefox-mv3/`（unpacked）
+- `artifacts/extension/*.zip`（用于商店上架 / 侧载）
 
 内容脚本以 WXT **unlisted script**（`tap-translate.js`）形式产出，点击翻译时通过 `chrome.scripting.executeScript` **按需注入**，不会自动注入所有页面。
 
@@ -131,15 +134,15 @@ make build-extension        # 类型检查 + 构建 + 打包 chrome/firefox
 ## Make 命令
 
 ```bash
-make dev-extension          # 插件开发(Chrome)：WXT dev/HMR，自动打开或 Load unpacked output/chrome-mv3
-make dev-extension-firefox  # 插件开发(Firefox)：WXT dev/HMR，自动打开或 output/firefox-mv3
-make build            # 插件构建与打包 → dist/
+make dev-extension          # 插件开发(Chrome)：WXT dev/HMR，加载 artifacts/extension/chrome-mv3
+make dev-extension-firefox  # 插件开发(Firefox)：WXT dev/HMR，加载 artifacts/extension/firefox-mv3
+make build            # 插件构建与打包 → artifacts/extension/
 make build-extension  # 仅插件：类型检查 + 构建 + zip（chrome/firefox）
 make test             # 插件 compile + lint + vitest
 make test-extension   # 仅插件 compile + lint + vitest
 make test-e2e         # 插件 E2E：真实 Chromium/Firefox 加载构建产物跑 Playwright
 make test-e2e-perf    # 性能预算 lab（Chromium + mock API）
 make check-npm-audit  # 插件运行时 npm audit 门禁
-make clean            # 删除 dist/ 与 extension/output/
+make clean            # 删除 artifacts/（保留依赖、本地配置和 .wxt 类型文件）
 ```
 

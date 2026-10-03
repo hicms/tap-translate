@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Builds and zips the WXT extension for Chrome and Firefox into dist/.
+# Builds and zips the WXT extension for Chrome and Firefox under artifacts/.
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXT_DIR="${ROOT_DIR}/extension"
-DIST_DIR="${ROOT_DIR}/dist"
+OUTPUT_DIR="${ROOT_DIR}/$(node "${EXT_DIR}/tools/artifact-paths.mjs" extension)"
 
 cd "${EXT_DIR}"
 
@@ -17,6 +17,7 @@ if [[ ! -d node_modules ]]; then
 fi
 
 echo "[build-extension] type-checking..."
+npm exec -- wxt prepare
 npm run compile
 
 echo "[build-extension] building + zipping chrome and firefox..."
@@ -27,12 +28,6 @@ echo "[build-extension] checking artifacts for secrets / dev markers..."
 chmod +x "${ROOT_DIR}/scripts/check-extension-artifacts.sh"
 "${ROOT_DIR}/scripts/check-extension-artifacts.sh"
 
-mkdir -p "${DIST_DIR}"
-# WXT writes zips to output/*.zip — copy them into dist/ for a stable path.
-# A missing zip here means the build regressed; fail loudly instead of
-# shipping an incomplete dist/.
-cp "${EXT_DIR}"/output/*.zip "${DIST_DIR}/"
-
 echo "[build-extension] done. Artifacts:"
-ls -1 "${EXT_DIR}"/output/*.zip
-echo "[build-extension] unpacked builds: ${EXT_DIR}/output/chrome-mv3 and firefox-mv3"
+ls -1 "${OUTPUT_DIR}"/*.zip
+echo "[build-extension] unpacked builds: ${OUTPUT_DIR}/chrome-mv3 and firefox-mv3"

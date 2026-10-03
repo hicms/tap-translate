@@ -1,9 +1,7 @@
 import { test as base, chromium, type BrowserContext } from '@playwright/test';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { artifactPath } from '../tools/artifact-paths.mjs';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const EXTENSION_PATH = path.resolve(dirname, '../output/chrome-mv3');
+const EXTENSION_PATH = artifactPath('extension', 'chrome-mv3');
 
 // Loads the built Chrome MV3 extension into a persistent context. Extensions
 // require the full Chromium build with the new headless mode.

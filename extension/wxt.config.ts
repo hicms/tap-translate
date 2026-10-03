@@ -1,10 +1,11 @@
 import { defineConfig } from 'wxt';
+import { artifactPath } from './tools/artifact-paths.mjs';
 
 // Single source of truth for the extension version; keep in sync with package.json.
 export default defineConfig({
   srcDir: '.',
-  // No leading dot: Chrome/Edge "Load unpacked" file pickers hide .* directories.
-  outDir: 'output',
+  outDir: artifactPath('extension'),
+  vite: () => ({ cacheDir: artifactPath('cache', 'wxt-vite') }),
   // Both Chrome and Firefox (109+) run MV3; this keeps a single background +
   // scripting API surface and matches the pre-migration baseline.
   manifestVersion: 3,

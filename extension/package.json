@@ -6,6 +6,7 @@
   "version": "0.1.1",
   "type": "module",
   "scripts": {
+    "clean": "node tools/clean-artifacts.mjs",
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
     "build": "wxt build",

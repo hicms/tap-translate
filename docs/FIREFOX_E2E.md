@@ -11,7 +11,7 @@ Playwright does **not** expose Firefox MV3 service workers or reliable `moz-exte
 
 1. Opens the same loopback fixture pages as Chromium (`mock-server`).
 2. Injects a minimal `chrome.*` shim + Forced `IntersectionObserver` (headless Gecko often skips IO for already-visible nodes).
-3. `eval`s the **built** `output/firefox-mv3/tap-translate.js` + CSS (the artifact users ship).
+3. `eval`s the **built** `artifacts/extension/firefox-mv3/tap-translate.js` + CSS (relative to the repository root; the artifact users ship).
 4. Drives `__TAP_TRANSLATE__.handleMessage({ action: 'translatePage', config })`.
 
 This matches the approach in `tools/live-translate-probe/run.mjs` (Firefox gecko-shim mode).
