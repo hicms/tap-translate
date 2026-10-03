@@ -2,6 +2,7 @@
   "name": "tap-translate-extension",
   "description": "TapTranslate — bilingual/replacement page translation via any OpenAI-compatible API.",
   "private": true,
+  "license": "MIT",
   "version": "0.1.1",
   "type": "module",
   "scripts": {

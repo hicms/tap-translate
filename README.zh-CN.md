@@ -8,9 +8,13 @@ TapTranslate 是一款 **网页翻译插件**，支持 Chrome、Edge、Firefox�
 
 **隐私：** 页面文字只发送到你配置的 API，API Key 保存在当前设备。
 
+**许可证：** [MIT](LICENSE)。
+
 ## 目录
 
 - [特性](#特性)
+- [项目结构](#项目结构)
+- [架构概览](#架构概览)
 - [快速开始](#快速开始)
 - [Make 命令](#make-命令)
 - [文档导航](#文档导航)
@@ -61,6 +65,16 @@ tap-translate/
 ```
 
 ---
+
+## 架构概览
+
+基于 TypeScript + WXT（Manifest V3），界面使用原生 DOM，不包含独立后端服务。
+
+- **扩展页面**（`entrypoints/popup`、`options`、`onboarding`）：提供翻译控制和配置界面。
+- **内容脚本**（`entrypoints/tap-translate.ts`）：每个 frame 独立运行会话；`collector` + `sites` 识别正文，`scheduler` 管理视口队列和重试，`renderer` 展示译文或恢复原文。
+- **扩展后台**（`entrypoints/background.ts`）：通过 `runtime.Port` 接收未命中缓存的批次，统一限制跨标签页并发，由 `provider` 调用用户配置的 API。
+
+翻译链路：采集 → 视口队列 → 内存/本地缓存 → 后台 API 请求 → 渲染。站点规则及扩展方式见[站点适配文档](docs/SITE-ADAPTERS.md)。
 
 ## 快速开始
 

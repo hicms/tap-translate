@@ -8,9 +8,12 @@ The extension translates pages through the API you configure and caches translat
 
 **Privacy:** Page text goes only to the API endpoint you configure. API keys stay on your device.
 
+**License:** [MIT](LICENSE).
+
 ## Table of Contents
 
 - [Features](#features)
+- [Architecture](#architecture)
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
 - [Make Targets](#make-targets-common)
@@ -31,6 +34,16 @@ The extension translates pages through the API you configure and caches translat
 - Per-site rules (auto-translate / blocklist)
 - Local-only custom headers with explicit opt-in export
 - UI locales: English, Simplified Chinese, Traditional Chinese, Russian, Spanish, French · targets: zh-CN, en, ru, es, fr
+
+## Architecture
+
+TypeScript + WXT (Manifest V3), with native DOM UI and no bundled backend.
+
+- **Extension pages** (`entrypoints/popup`, `options`, `onboarding`) handle controls and configuration.
+- **Content script** (`entrypoints/tap-translate.ts`) runs a session per frame: `collector` + `sites` identify text, `scheduler` manages viewport queues and retries, and `renderer` displays translations or restores the page.
+- **Background** (`entrypoints/background.ts`) receives uncached batches through `runtime.Port`, limits concurrency across tabs, and calls the configured API through `provider`.
+
+Translation flow: collect → viewport queue → memory/local cache → background API request → render. See [site adapters](docs/SITE-ADAPTERS.md) for DOM rules and extension points.
 
 ## Quick start
 
