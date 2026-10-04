@@ -2,11 +2,27 @@
 /artifacts/
 *.zip
 *.tar.gz
+*.tgz
+*.crx
+*.xpi
 *.tsbuildinfo
 
 # Tool-managed directories (npm and WXT keep these beside package.json)
-/extension/node_modules/
-/extension/.wxt/
+node_modules/
+.wxt/
+
+# Tool defaults when invoked without the repository output configuration
+.output/
+dist/
+.vite/
+.vitest/
+.cache/
+.eslintcache
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
 
 # Extension: local-only / never package
 /extension/dev-settings.json
