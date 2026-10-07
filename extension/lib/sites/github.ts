@@ -22,6 +22,7 @@ export const github: SiteProfile = {
     'main [data-testid="mobile-description"]',
   ],
   ignore: [
+    'relative-time',
     // Title siblings (issue number, badges) retain their exact position/spelling.
     'main h1 > .markdown-title ~ *',
     // Draft previews can also be markdown-body; they are part of the editor.
