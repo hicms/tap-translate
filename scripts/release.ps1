@@ -108,7 +108,7 @@ function Assert-ReleaseAssets {
         [Parameter(Mandatory)][string] $Tag
     )
 
-    $releaseJson = (Invoke-Gh @('release', 'view', $Tag, '--repo', $Repository, '--json', 'url,assets')) -join "`n"
+    $releaseJson = ((Invoke-Gh @('release', 'view', $Tag, '--repo', $Repository, '--json', 'url,assets')) -join "`n")
     $release = $releaseJson | ConvertFrom-Json
     $expected = @(
         "tap-translate-chrome-$Tag.zip",
@@ -179,7 +179,7 @@ try {
             throw "Remote tag $tag already exists."
         }
 
-        $repository = (Invoke-Gh @('repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner') -join "`n").Trim()
+        $repository = ((Invoke-Gh @('repo', 'view', '--json', 'nameWithOwner', '--jq', '.nameWithOwner')) -join "`n").Trim()
         if ([string]::IsNullOrWhiteSpace($repository)) {
             throw 'Could not identify the GitHub repository.'
         }
@@ -218,7 +218,7 @@ try {
         if (-not $NoWait) {
             $runId = $null
             for ($attempt = 0; $attempt -lt 60; $attempt++) {
-                $runsJson = (Invoke-Gh @('run', 'list', '--repo', $repository, '--workflow', 'release.yml', '--event', 'push', '--limit', '20', '--json', 'databaseId,headSha,headBranch')) -join "`n"
+                $runsJson = ((Invoke-Gh @('run', 'list', '--repo', $repository, '--workflow', 'release.yml', '--event', 'push', '--limit', '20', '--json', 'databaseId,headSha,headBranch')) -join "`n")
                 $runs = @($runsJson | ConvertFrom-Json)
                 $run = $runs | Where-Object { $_.headSha -ceq $localHead -and $_.headBranch -ceq $tag } | Select-Object -First 1
                 if ($run) {
