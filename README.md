@@ -75,6 +75,12 @@ Builds and ZIPs live in `artifacts/extension/`; test results, reports and config
 
 Copy `extension/dev-settings.json.example` to `extension/dev-settings.json` for local imports or live probes—**never** put secrets under `extension/public/` (that directory is packaged).
 
+### Build and release
+
+From the repository root, run `.\scripts\build.ps1` to type-check, lint, test, and package Chrome and Firefox archives under `artifacts/extension/`. A Chrome build is also synced to `dist/` for **Load unpacked** debugging. Use `-SkipQuality` for a local package-only build, or `-ChromeOnly` / `-FirefoxOnly` for one browser.
+
+After committing source changes to `main`, run `gh auth login` once and then `.\scripts\release.ps1 -Publish`. The script increments the patch version, commits `extension/package.json` and `extension/package-lock.json`, creates an annotated `vX.Y.Z` tag, and atomically pushes `main` plus the tag. Use `-Version 0.2.0` for an explicit version and `-NoWait` to return before GitHub Actions finishes. The tag workflow runs the quality checks, creates Chrome/Firefox ZIPs with SHA-256 files, and publishes the GitHub Release.
+
 ---
 
 ## Documentation

@@ -127,6 +127,12 @@ make build-extension        # 类型检查 + 构建 + 打包 chrome/firefox
 
 内容脚本以 WXT **unlisted script**（`tap-translate.js`）形式产出，点击翻译时通过 `chrome.scripting.executeScript` **按需注入**，不会自动注入所有页面。
 
+### 构建与发版
+
+在仓库根目录运行 `.\scripts\build.ps1`，会执行类型检查、lint、单测，并在 `artifacts/extension/` 生成 Chrome 和 Firefox 压缩包，同时把 Chrome 构建同步到根目录 `dist/`，可直接用于 Chrome 的“加载已解压的扩展程序”调试。只想快速打包时使用 `-SkipQuality`；也可以使用 `-ChromeOnly` 或 `-FirefoxOnly` 只构建一个浏览器。
+
+提交源码到 `main` 后，先执行一次 `gh auth login`，再运行 `.\scripts\release.ps1 -Publish`。脚本会递增 patch 版本，更新 `extension/package.json` 和 `extension/package-lock.json`，提交版本变更，创建带注释的 `vX.Y.Z` tag，并原子推送 `main` 与 tag。使用 `-Version 0.2.0` 指定版本，使用 `-NoWait` 在推送后立即返回。tag workflow 会执行质量检查，生成 Chrome/Firefox ZIP 与 SHA-256 文件，并创建 GitHub Release。
+
 ### 使用
 
 - 插件图标 → **翻译页面** / **恢复原文**

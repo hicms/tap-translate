@@ -1,0 +1,72 @@
+name: Release TapTranslate
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.15.1'
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install extension dependencies
+        run: npm ci
+        working-directory: extension
+
+      - name: Type-check
+        run: npm run compile
+        working-directory: extension
+
+      - name: Lint
+        run: npm run lint
+        working-directory: extension
+
+      - name: Run unit tests
+        run: npm test
+        working-directory: extension
+
+      - name: Build release archives and checksums
+        run: node scripts/package-release.mjs "$GITHUB_REF_NAME"
+
+      - name: Check extension artifacts
+        run: |
+          sed -i 's/\r$//' scripts/check-extension-artifacts.sh
+          bash scripts/check-extension-artifacts.sh
+
+      - name: Generate release notes
+        run: node scripts/generate-release-notes.mjs "$GITHUB_REF_NAME" "$RUNNER_TEMP/release-notes.md"
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "artifacts/release/tap-translate-chrome-$GITHUB_REF_NAME.zip" \
+            "artifacts/release/tap-translate-chrome-$GITHUB_REF_NAME.sha256" \
+            "artifacts/release/tap-translate-firefox-$GITHUB_REF_NAME.zip" \
+            "artifacts/release/tap-translate-firefox-$GITHUB_REF_NAME.sha256" \
+            --verify-tag \
+            --title "TapTranslate $GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
