@@ -3,7 +3,7 @@
   "description": "TapTranslate — bilingual/replacement page translation via any OpenAI-compatible API.",
   "private": true,
   "license": "MIT",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "scripts": {
     "clean": "node tools/clean-artifacts.mjs",
