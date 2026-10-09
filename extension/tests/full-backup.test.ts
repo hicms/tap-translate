@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFullBackup, parseFullBackup, parseImportFile, restoreFullBackup, BackupRestoreError } from '../lib/settings/backup';
+import { createFullBackup, parseFullBackup, parseImportFile, restoreFullBackup, restoreFingerprint, BackupRestoreError } from '../lib/settings/backup';
 import { getSettings, saveSettings } from '../lib/settings/storage';
 import { buildSettingsExport } from './helpers/legacy-settings-export';
 import { readOnboardingSnapshot, replaceOnboardingSnapshot } from '../lib/settings/onboarding';
@@ -11,6 +11,7 @@ import { mockChromeStorage } from './helpers/settings-storage';
 
 function browser() {
   const data = mockChromeStorage();
+  vi.stubGlobal('navigator', { locks: { request: vi.fn(async (_name, _options, run) => run({ name: _name })) } });
   Object.assign(chrome, {
     extension: { inIncognitoContext: false },
     runtime: { getManifest: () => ({ version: '0.1.2' }) },
@@ -201,5 +202,65 @@ describe('full backup', () => {
     expect(parseCacheSnapshot({ [key]: { t: 'old', at: 1, b: 3 } })).toEqual({});
     expect(() => parseCacheSnapshot({ [key]: { t: 'x'.repeat(4 * 1024 * 1024 + 1), at: Date.now(), b: 1 } })).toThrow('limits');
     expect(() => parseImportFile(' '.repeat(20 * 1024 * 1024 + 1))).toThrow('20 MiB');
+  });
+
+  it('enforces the same byte limit on a decoded remote backup before schema parsing', () => {
+    expect(() => parseFullBackup({ padding: 'x'.repeat(20 * 1024 * 1024) })).toThrow('20 MiB');
+  });
+
+  it('requests permissions before exactly one lock and captures an undo snapshot', async () => {
+    const backup = await populated();
+    const guard = await restoreFingerprint();
+    const events: string[] = [];
+    vi.mocked(chrome.permissions.request).mockImplementation(async () => { events.push('permission'); return true; });
+    vi.mocked(navigator.locks.request).mockImplementation((async (_name, _options, run) => {
+      events.push('lock'); return run({ name: 'test', mode: 'exclusive' });
+    }) as typeof navigator.locks.request);
+    const snapshot = vi.fn();
+    await restoreFullBackup(backup, { expectedFingerprint: guard, onSnapshot: snapshot });
+    expect(events).toEqual(['permission', 'lock']);
+    expect(snapshot).toHaveBeenCalledOnce();
+  });
+
+  it('undo restores the original installed-rules mode instead of pinning a portable snapshot', async () => {
+    const remote = await populated();
+    await saveSettings({ builtinSiteProfiles: null });
+    const snapshot = vi.fn();
+    await restoreFullBackup(remote, { onSnapshot: snapshot });
+    expect((await getSettings()).builtinSiteProfiles).not.toBeNull();
+    const local = snapshot.mock.calls[0]![0];
+    await restoreFullBackup({ ...local.backup, settings: local.settings });
+    expect((await getSettings()).builtinSiteProfiles).toBeNull();
+  });
+
+  it('rejects a stale restore after an inactive provider secret changes, even without a revision change', async () => {
+    const backup = await populated();
+    const guard = await restoreFingerprint();
+    const before = await getSettings();
+    await saveSettings({ providers: before.providers.map((p, i) => i === 0 ? { ...p, apiKey: 'changed-key', persistApiKey: false } : p) });
+    expect((await getSettings()).revision).toBe(before.revision);
+    vi.mocked(chrome.storage.local.set).mockClear();
+    await expect(restoreFullBackup(backup, { expectedFingerprint: guard })).rejects.toThrow('CHANGED');
+    expect(chrome.storage.local.set).not.toHaveBeenCalled();
+  });
+
+  it('detects changing onboarding during collection and does not emit a mixed snapshot', async () => {
+    await populated();
+    const get = vi.mocked(chrome.permissions.getAll);
+    get.mockImplementationOnce(async () => {
+      await replaceOnboardingSnapshot({ completed: false });
+      return { origins: [], permissions: [] };
+    });
+    await expect(createFullBackup()).rejects.toThrow('CHANGED');
+  });
+
+  it('does not mistake a newly granted origin for a local setting change', async () => {
+    const backup = await populated();
+    const guard = await restoreFingerprint();
+    vi.mocked(chrome.permissions.request).mockImplementation(async () => {
+      Object.assign(chrome.permissions, { getAll: vi.fn(async () => ({ origins: ['https://new.example/*'], permissions: [] })) });
+      return true;
+    });
+    await expect(restoreFullBackup(backup, { expectedFingerprint: guard })).resolves.toBeDefined();
   });
 });

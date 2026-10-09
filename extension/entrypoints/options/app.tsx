@@ -25,6 +25,7 @@ import {
 import { ServiceWorkspace, type ServiceSelection } from './service-workspace';
 import { SiteWorkspace } from './site-editor';
 import { restoreFullBackup } from '../../lib/settings/backup';
+import { withDataTransferLock } from '../../lib/backup/lock';
 import { DataPanel } from './data-panel';
 
 const sections = ['connection', 'reading', 'sites', 'data'] as const;
@@ -78,6 +79,7 @@ function OptionsContent({
   const [siteEditing, setSiteEditing] = useState(true);
   const [error, setError] = useState<DraftError | null>(null);
   const [busy, setBusy] = useState(false);
+  const [settingsVersion, setSettingsVersion] = useState(0);
   const busyRef = useRef(false);
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState({ text: '', error: false });
@@ -128,6 +130,7 @@ function OptionsContent({
       }));
   }
   function replace(saved: Settings) {
+    setSettingsVersion(version => version + 1);
     const next = optionsDraft(saved);
     // Keep editor identity/navigation while replacing its saved data.
     next.sites = next.sites.map((site) => ({
@@ -230,8 +233,8 @@ function OptionsContent({
     if (origins.length && !(await chrome.permissions.request({ origins }).catch(() => false)))
       throw new Error(t('sitePermissionDenied'));
   }
-  async function persist(patch: Partial<Settings>) {
-    if (patch.siteRules) await ensureSitePermissions(patch.siteRules);
+  async function persist(patch: Partial<Settings>, permissionRequested = false) {
+    if (patch.siteRules && !permissionRequested) await ensureSitePermissions(patch.siteRules);
     const saved = await saveSettings(patch);
     if (patch.apiBase && saved.apiBase !== baseline.current.apiBase)
       await ensureApiHostPermission(saved.apiBase);
@@ -444,18 +447,20 @@ function OptionsContent({
                 aria-labelledby="section-data-title"
               >
                 <DataPanel
+                  settingsVersion={settingsVersion}
                   dirty={dirty}
                   report={report}
-                  onImport={async (value) => {
+                  onImport={async (value, options) => {
                     if (busyRef.current) return;
                     busyRef.current = true;
                     setBusy(true);
                     try {
                       if (value.kind === 'backup') {
-                        replace(await restoreFullBackup(value.backup));
+                        replace(await restoreFullBackup(value.backup, options));
                         report(t('backupRestored'));
                       } else {
-                        await persist(value.settings);
+                        if (value.settings.siteRules) await ensureSitePermissions(value.settings.siteRules);
+                        await withDataTransferLock(() => persist(value.settings, true));
                         report(t('imported'));
                       }
                     } finally {

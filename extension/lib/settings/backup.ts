@@ -7,6 +7,9 @@ import { getSettings, saveSettings } from './storage';
 import { prepareSettingsImport } from './transfer';
 import { onboardingSchema, readOnboardingSnapshot, replaceOnboardingSnapshot } from './onboarding';
 import type { Settings } from '../types';
+import { stateFingerprint } from '../backup/compare';
+import { BackupError } from '../backup/errors';
+import { withDataTransferLock } from '../backup/lock';
 
 export const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
 const FORMAT = 'tap-translate-backup';
@@ -53,6 +56,7 @@ function assertSnapshot(value: unknown, normalized: unknown, path = 'settings'):
 
 /** Full snapshots must never silently turn missing settings or credentials into defaults. */
 export function parseFullBackup(raw: unknown): FullBackup {
+  if (new TextEncoder().encode(JSON.stringify(raw)).length > MAX_BACKUP_BYTES) throw new Error('Backup exceeds 20 MiB');
   const envelope = envelopeSchema.parse(raw);
   for (const field of Object.keys(createDefaultSettings())) {
     if (!Object.hasOwn(envelope.settings, field)) throw new Error(`Incomplete backup: settings.${field}`);
@@ -87,18 +91,38 @@ export function parseImportFile(text: string): PreparedImport {
 }
 
 export async function createFullBackup(): Promise<FullBackup> {
-  const [settings, cache, onboarding, permissions] = await Promise.all([
-    getSettings({ strict: true }), exportCacheSnapshot(), readOnboardingSnapshot(), chrome.permissions.getAll(),
-  ]);
+  const before = await readBackupState();
+  const [state, cache] = await Promise.all([readBackupState(), exportCacheSnapshot()]);
   const backup = parseFullBackup({
     format: FORMAT, version: 1, createdAt: new Date().toISOString(),
     extensionVersion: chrome.runtime.getManifest().version,
-    settings: { ...settings, builtinSiteProfiles: settings.builtinSiteProfiles ?? siteProfiles },
-    cache, onboarding,
-    permissions: { origins: permissions.origins ?? [], permissions: permissions.permissions ?? [] },
+    ...state, cache,
   });
-  if (new TextEncoder().encode(JSON.stringify(backup)).length > MAX_BACKUP_BYTES) throw new Error('Backup exceeds 20 MiB');
+  const signatures = await Promise.all([before, backup, await readBackupState()].map(value => stateFingerprint(value)));
+  if (signatures.some(value => value !== signatures[0])) throw new BackupError('CHANGED');
   return backup;
+}
+
+async function readBackupState(): Promise<Pick<FullBackup, 'settings' | 'onboarding' | 'permissions'>> {
+  const [settings, onboarding, permissions] = await Promise.all([
+    getSettings({ strict: true }), readOnboardingSnapshot(), chrome.permissions.getAll(),
+  ]);
+  return {
+    settings: { ...settings, builtinSiteProfiles: settings.builtinSiteProfiles ?? [...siteProfiles] }, onboarding,
+    permissions: { origins: permissions.origins ?? [], permissions: permissions.permissions ?? [] },
+  };
+}
+
+export async function restoreFingerprint(): Promise<string> {
+  return stateFingerprint(await readBackupState(), false);
+}
+
+/** Local undo retains the installed-rules mode; portable backups always materialize it. */
+export interface LocalRestoreSnapshot { backup: FullBackup; settings: Settings }
+
+export interface RestoreOptions {
+  expectedFingerprint?: string;
+  onSnapshot?: (before: LocalRestoreSnapshot) => void;
 }
 
 export class BackupRestoreError extends Error {
@@ -111,12 +135,23 @@ export class BackupRestoreError extends Error {
 }
 
 /** Call directly from the confirmation click: permissions.request needs a user gesture. */
-export async function restoreFullBackup(backup: FullBackup): Promise<Settings> {
+export async function restoreFullBackup(backup: FullBackup, options: RestoreOptions = {}): Promise<Settings> {
   const origins = backup.permissions.origins;
   if (origins.length && !(await chrome.permissions.request({ origins }))) throw new Error('Backup permissions were not granted; no data changed');
-  const [previousSettings, previousCache, previousOnboarding] = await Promise.all([
-    getSettings({ strict: true }), exportCacheSnapshot(), readOnboardingSnapshot(),
-  ]);
+  return withDataTransferLock(async () => {
+    if (options.expectedFingerprint && options.expectedFingerprint !== await restoreFingerprint()) throw new BackupError('CHANGED');
+    const previousSettings = await getSettings({ strict: true });
+    const before = await createFullBackup();
+    const previousState = { ...before, settings: { ...previousSettings, builtinSiteProfiles: previousSettings.builtinSiteProfiles ?? [...siteProfiles] } };
+    if (await stateFingerprint(previousState, false) !== await stateFingerprint(before, false)) throw new BackupError('CHANGED');
+    if (options.expectedFingerprint && options.expectedFingerprint !== await stateFingerprint(before, false)) throw new BackupError('CHANGED');
+    options.onSnapshot?.({ backup: before, settings: previousSettings });
+    return applyFullBackup(backup, before, previousSettings);
+  });
+}
+
+async function applyFullBackup(backup: FullBackup, before: FullBackup, previousSettings: Settings): Promise<Settings> {
+  const { cache: previousCache, onboarding: previousOnboarding } = before;
   try {
     const saved = await saveSettings(backup.settings);
     await replaceOnboardingSnapshot(backup.onboarding);

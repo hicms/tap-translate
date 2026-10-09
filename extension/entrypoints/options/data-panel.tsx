@@ -4,200 +4,112 @@ import { FormDisabled } from '../../ui/fields';
 import { Dialog } from '../../ui/dialog';
 import { useLocale } from '../../ui/locale';
 import { clearCache } from '../../lib/cache';
-import { createFullBackup, MAX_BACKUP_BYTES, parseImportFile, type PreparedImport } from '../../lib/settings/backup';
+import { createFullBackup, MAX_BACKUP_BYTES, parseImportFile, restoreFingerprint,
+  type LocalRestoreSnapshot, type PreparedImport, type RestoreOptions } from '../../lib/settings/backup';
+import { withDataTransferLock } from '../../lib/backup/lock';
+import type { DownloadedBackup } from '../../lib/backup/gist';
+import { backupErrorText } from './backup-ui';
+import { ImportPreview } from './import-preview';
+import { GistPanel } from './gist-panel';
 
-export function DataPanel({
-  onImport,
-  report,
-  dirty,
-}: {
-  onImport: (value: PreparedImport) => Promise<void>;
-  dirty: boolean;
-  report: (text: string, error?: boolean) => void;
+interface Preview { value: PreparedImport; fingerprint: string; source?: string; expired?: number; undo?: boolean }
+
+export function DataPanel({ onImport, report, dirty, settingsVersion }: {
+  onImport: (value: PreparedImport, options?: RestoreOptions) => Promise<void>;
+  dirty: boolean; settingsVersion: number; report: (text: string, error?: boolean) => void;
 }) {
   const { t } = useLocale();
   const fileInput = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<PreparedImport | null>(null);
-  const [importing, setImporting] = useState(false);
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [undo, setUndo] = useState<LocalRestoreSnapshot | null>(null);
+  const [working, setWorking] = useState(false);
+  const workingRef = useRef(false);
+  const [cloudBusy, setCloudBusy] = useState(false);
+  const [dataVersion, setDataVersion] = useState(0);
   const [confirmation, setConfirmation] = useState<'export' | 'cache' | null>(null);
   const locked = useContext(FormDisabled);
-  const [exporting, setExporting] = useState(false);
-  const exportingRef = useRef(false);
-  const blocked = locked || importing || exporting;
-  const previewSettings = preview?.kind === 'settings' ? preview.settings : preview?.backup.settings;
-  async function exportSettings() {
-    if (dirty || blocked || exportingRef.current) return;
-    exportingRef.current = true;
-    setExporting(true);
-    try {
-      const output = await createFullBackup();
-      const url = URL.createObjectURL(
-        new Blob([JSON.stringify(output, null, 2)], {
-          type: 'application/json',
-        }),
-      );
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `tap-translate-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      report(t('exported'));
-    } catch (error) {
-      report(error instanceof Error ? error.message : t('errUnknown'), true);
-    } finally {
-      exportingRef.current = false;
-      setExporting(false);
-    }
+  const blocked = locked || working || cloudBusy;
+
+  async function prepare(value: PreparedImport, details?: Partial<Preview>) {
+    setPreview({ ...details, value, fingerprint: await restoreFingerprint() });
   }
-  const labels: Record<string, string> = {
-    apiBase: 'apiBaseUrl',
-    connectionMode: 'connectionMode',
-    apiKey: 'apiKey',
-    model: 'model',
-    targetLang: 'targetLanguage',
-    uiLocale: 'uiLocale',
-    siteContentRules: 'contentRules',
-    builtinSiteProfiles: 'backupBuiltinRules',
-    mode: 'translationMode',
-    maxConcurrent: 'maxConcurrent',
-    batchSize: 'batchSize',
-    customHeaders: 'customHeaders',
-    siteRules: 'sectionSites',
-    providers: 'translationServices',
-    activeProviderId: 'defaultModel',
-    modelParameters: 'modelParameters',
-  };
-  return (
-    <>
-      <div className="section-head">
-        <h2 id="section-data-title">{t('sectionData')}</h2>
+  function run(action: () => Promise<void>, importing = false) {
+    if (blocked || workingRef.current) return;
+    workingRef.current = true; setWorking(true);
+    void action().catch(error => report(`${importing ? `${t('importFailed')}: ` : ''}${backupErrorText(error, t)}`, true))
+      .finally(() => { workingRef.current = false; setWorking(false); });
+  }
+  function exportSettings() {
+    if (dirty) return;
+    run(() => withDataTransferLock(async () => {
+      const output = await createFullBackup();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(output)], { type: 'application/json' }));
+      const link = document.createElement('a'); link.href = url;
+      link.download = `tap-translate-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      report(t('exported'));
+    }));
+  }
+  function confirmImport() {
+    if (!preview || dirty) return;
+    const current = preview;
+    let before: LocalRestoreSnapshot | null = null;
+    run(async () => {
+      // No await before onImport: permissions.request stays in this click stack.
+      await onImport(current.value, { expectedFingerprint: current.fingerprint, onSnapshot: snapshot => { before = snapshot; } });
+      setUndo(current.undo ? null : before);
+      setPreview(null); setDataVersion(version => version + 1);
+    }, true);
+  }
+  async function fromGist(remote: DownloadedBackup) {
+    await prepare({ kind: 'backup', backup: remote.backup }, {
+      source: `Gist · ${remote.source.label} · ${remote.id.slice(0, 8)}`, expired: remote.expiredCacheCount,
+    });
+  }
+
+  return <>
+    <div className="section-head"><h2 id="section-data-title">{t('sectionData')}</h2></div>
+    <div className="data-block">
+      <h3>{t('sectionImportExport')}</h3>
+      <p className="hint">{t('backupScope')}</p><p className="hint">{t('backupSavedOnly')}</p>
+      {dirty ? <p role="status">{t('backupUnsaved')}</p> : null}
+      <div className="actions-inline">
+        <Button id="exportBtn" label={t('exportSettings')} isDisabled={blocked || dirty} onClick={() => setConfirmation('export')} />
+        <Button id="importBtn" label={t('importSettings')} isDisabled={blocked || dirty} onClick={() => fileInput.current?.click()} />
+        <div id="importFile" hidden><input ref={fileInput} type="file" accept="application/json,.json" disabled={blocked || dirty}
+          onChange={event => {
+            const selected = event.currentTarget.files?.[0]; event.currentTarget.value = '';
+            if (selected && selected.size > MAX_BACKUP_BYTES) { report(t('backupTooLarge'), true); return; }
+            if (selected) run(async () => { await prepare(parseImportFile(await selected.text())); }, true);
+          }} /></div>
       </div>
-      <ul className="privacy-list">
-        {['privacyTextDestination', 'privacySecretsLocal', 'privacyNoCloud'].map((key) => (
-          <li key={key}>{t(key)}</li>
-        ))}
-      </ul>
-      <div className="data-block">
-        <h3>{t('sectionCache')}</h3>
-        <p className="hint">{t('cacheHint')}</p>
-        <Button id="clearCacheBtn" isDisabled={blocked} label={t('clearCache')} onClick={() => setConfirmation('cache')} />
+    </div>
+    <GistPanel dirty={dirty} disabled={blocked || preview !== null} onBusy={setCloudBusy}
+      onPreview={fromGist} dataVersion={dataVersion + settingsVersion} report={report} />
+    {undo ? <div className="data-block" role="status">
+      <p>{t('gistUndoHint')}</p>
+      <Button id="undoRestoreBtn" label={t('gistUndo')} isDisabled={blocked || dirty}
+        onClick={() => run(() => prepare({ kind: 'backup', backup: { ...undo.backup, settings: undo.settings } }, { undo: true }))} />
+    </div> : null}
+    <div className="data-block">
+      <h3>{t('sectionCache')}</h3><p className="hint">{t('cacheHint')}</p>
+      <Button id="clearCacheBtn" isDisabled={blocked} label={t('clearCache')} onClick={() => setConfirmation('cache')} />
+    </div>
+    <ul className="privacy-list">{['privacyTextDestination', 'privacySecretsLocal', 'privacyNoCloud'].map(key => <li key={key}>{t(key)}</li>)}</ul>
+    <ImportPreview value={preview?.value ?? null} source={preview?.source} expiredCacheCount={preview?.expired} undo={preview?.undo}
+      blocked={blocked} onCancel={() => setPreview(null)} onConfirm={confirmImport} />
+    <Dialog id="dataConfirmDialog" title={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
+      open={confirmation !== null} onClose={() => setConfirmation(null)}>
+      <p>{t(confirmation === 'cache' ? 'confirmClearCache' : 'backupPrivateWarning')}</p>
+      <div className="actions">
+        <Button value="cancel" label={t('cancel')} onClick={() => setConfirmation(null)} />
+        <Button value="confirm" variant="primary" label={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
+          onClick={() => {
+            if (confirmation === 'cache') run(() => withDataTransferLock(async () => { await clearCache(); report(t('cacheCleared')); setDataVersion(v => v + 1); }));
+            else exportSettings();
+            setConfirmation(null);
+          }} />
       </div>
-      <div className="data-block">
-        <h3>{t('sectionImportExport')}</h3>
-        <p className="hint">{t('backupScope')}</p>
-        <p className="hint">{t('backupSavedOnly')}</p>
-        {dirty ? <p role="status">{t('backupUnsaved')}</p> : null}
-        <div className="actions-inline">
-          <Button
-            id="exportBtn"
-            label={t('exportSettings')}
-            isDisabled={blocked || dirty}
-            onClick={() => setConfirmation('export')}
-          />
-          <Button
-            id="importBtn"
-            label={t('importSettings')}
-            isDisabled={blocked || dirty}
-            onClick={() => fileInput.current?.click()}
-          />
-          <div id="importFile" hidden>
-            <input
-              ref={fileInput}
-              type="file"
-              accept="application/json,.json"
-              disabled={blocked || dirty}
-              onChange={(event) => {
-                const selected = event.currentTarget.files?.[0];
-                event.currentTarget.value = '';
-                if (selected && selected.size > MAX_BACKUP_BYTES) { report(t('backupTooLarge'), true); return; }
-                if (selected) void selected.text()
-                  .then(text => setPreview(parseImportFile(text)))
-                  .catch(error => report(
-                    `${t('importFailed')}: ${error instanceof Error ? error.message : String(error)}`, true,
-                  ));
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <Dialog
-        id="importPreviewDialog"
-        title={t('importPreviewTitle')}
-        open={preview !== null}
-        onClose={() => {
-          if (!importing) setPreview(null);
-        }}
-      >
-        <p id="importPreviewSummary" className="hint">
-          {t(preview?.kind === 'backup' ? 'backupRestoreWarning' : 'importPreviewSummary')}
-        </p>
-        {preview?.kind === 'backup' ? (
-          <div id="backupPreview">
-            <p>{t('backupCounts', [preview.backup.settings.providers.length, preview.backup.settings.siteRules.length, preview.backup.settings.siteContentRules.length, preview.backup.settings.builtinSiteProfiles!.length, Object.keys(preview.backup.cache).length])}</p>
-            <p>{t('backupCreated', [preview.backup.createdAt, preview.backup.extensionVersion])}</p>
-            <p>{t('backupPermissionHint')}</p>
-            <ul>{preview.backup.permissions.origins.map(origin => <li key={origin}>{origin}</li>)}</ul>
-          </div>
-        ) : null}
-        <ul id="importPreviewChanges">
-          {Object.keys(previewSettings ?? {}).filter(field => !['schemaVersion', 'revision'].includes(field)).map((field) => (
-            <li key={field}>{t('importWillUpdate', [t(labels[field] || field)])}</li>
-          ))}
-          {['apiKey', 'customHeaders']
-            .filter((field) => !(field in (previewSettings ?? {})))
-            .map((field) => (
-              <li key={field}>{t('importWillKeep', [t(labels[field]!)])}</li>
-            ))}
-        </ul>
-        <div className="actions">
-          <Button
-            value="cancel"
-            label={t('cancel')}
-            isDisabled={blocked}
-            onClick={() => setPreview(null)}
-          />
-          <Button
-            value="confirm"
-            variant="primary"
-            label={t('confirmImport')}
-            isDisabled={blocked}
-            onClick={() => {
-              if (!preview || importing) return;
-              setImporting(true);
-              void onImport(preview)
-                .then(() => setPreview(null))
-                .catch((error) => report(String(error), true))
-                .finally(() => setImporting(false));
-            }}
-          />
-        </div>
-      </Dialog>
-      <Dialog
-        id="dataConfirmDialog"
-        title={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
-        open={confirmation !== null}
-        onClose={() => setConfirmation(null)}
-      >
-        {confirmation === 'cache' ? (
-          <p>{t('confirmClearCache')}</p>
-        ) : <p>{t('backupPrivateWarning')}</p>}
-        <div className="actions">
-          <Button value="cancel" label={t('cancel')} onClick={() => setConfirmation(null)} />
-          <Button
-            value="confirm"
-            variant="primary"
-            label={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
-            onClick={() => {
-              if (confirmation === 'cache')
-                void clearCache()
-                  .then(() => report(t('cacheCleared')))
-                  .catch((error) => report(String(error), true));
-              else void exportSettings();
-              setConfirmation(null);
-            }}
-          />
-        </div>
-      </Dialog>
-    </>
-  );
+    </Dialog>
+  </>;
 }

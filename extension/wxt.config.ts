@@ -1,6 +1,7 @@
 import { defineConfig } from 'wxt';
 import { artifactPath } from './tools/artifact-paths.mjs';
 import { astryxThemeCompatibility } from './tools/astryx-theme';
+import { GIST_DATA_PERMISSIONS } from './lib/backup/permissions';
 
 // Single source of truth for the extension version; keep in sync with package.json.
 export default defineConfig({
@@ -59,6 +60,7 @@ export default defineConfig({
         // user's own configured LLM endpoint. Declared honestly for AMO.
         data_collection_permissions: {
           required: ['websiteContent'],
+          optional: GIST_DATA_PERMISSIONS,
         },
       } as Record<string, unknown>,
     },
