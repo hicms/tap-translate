@@ -105,7 +105,7 @@ make check-npm-audit      # runtime npm audit gate
 
 ### Export and import
 
-The **Gist** card on the same page supports encrypted backup and restore. Connect with a GitHub token and a backup password of at least 12 characters, then choose **Back up now**. Each upload creates an independent Secret Gist and verifies it by reading it back. Restore the selected backup or preview an older entry in **History** before confirming. A completed full restore can be undone once while the current settings page remains open.
+The **Gist** card on the same page supports encrypted backup and restore. Connect with a GitHub token and a backup password of at least 8 characters, then choose **Back up now**. Each upload creates an independent Secret Gist and verifies it by reading it back. Restore the selected backup or preview an older entry in **History** before confirming. A completed full restore can be undone once while the current settings page remains open.
 
 Tokens and passwords stay in page memory; refresh or reopen requires reconnection. Lost passwords cannot decrypt old backups. Connecting never uploads automatically, and disconnecting keeps remote backups. If an upload response is lost, reconcile its result before creating another backup. Gist is experimental: local 20 MiB encryption round trips are tested, but GitHub's maximum accepted upload size is unverified. File export remains available if GitHub rejects an upload. [Strategy and boundaries](docs/GIST-BACKUP.md)
 

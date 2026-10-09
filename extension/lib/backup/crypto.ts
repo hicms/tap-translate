@@ -48,7 +48,7 @@ function unbase64(text: string): Uint8Array<ArrayBuffer> {
 }
 
 export function checkPassword(password: string): void {
-  if ([...password].length < 12 || encoder.encode(password).length > 1024) throw new BackupError('PASSWORD_LENGTH');
+  if ([...password].length < 8 || encoder.encode(password).length > 1024) throw new BackupError('PASSWORD_LENGTH');
 }
 async function keyFor(password: string, salt: string): Promise<CryptoKey> {
   const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);

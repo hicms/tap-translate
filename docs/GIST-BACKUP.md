@@ -103,7 +103,7 @@ Gist                                      已连接 · GitHub 账户
 
 明文内容是 `{ backup: FullBackup, source: {deviceId, label}, operationId }`。20 MiB 限制仍针对 FullBackup 的 UTF-8 JSON；外层元数据和包装开销合计限制在 4 KiB 内。先序列化、加密，再把 Base64 密文按不超过 512 KiB 的 ASCII 分片拆分。最多 64 片；无需压缩或浏览器执行 git clone，不引入压缩炸弹边界。
 
-manifest v1 包含固定 format/version、operationId、算法、KDF 参数、salt、iv、密文总字节数和有序分片清单（文件名、字节数、SHA-256）。AES-GCM 使用 256 位密钥、随机 16 字节 salt、随机 12 字节 IV、128 位认证标签；Web Crypto 返回的密文含标签。PBKDF2 使用 SHA-256 和固定 600,000 次迭代作为 v1 参数，实施时测量最低支持浏览器上的耗时；改变该协议参数需版本决策，不能随设备自行变化。密码至少 12 个 Unicode 字符，UTF-8 最多 1024 字节，不静默 trim/归一化。[Web Crypto 派生密钥接口](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey)
+manifest v1 包含固定 format/version、operationId、算法、KDF 参数、salt、iv、密文总字节数和有序分片清单（文件名、字节数、SHA-256）。AES-GCM 使用 256 位密钥、随机 16 字节 salt、随机 12 字节 IV、128 位认证标签；Web Crypto 返回的密文含标签。PBKDF2 使用 SHA-256 和固定 600,000 次迭代作为 v1 参数，实施时测量最低支持浏览器上的耗时；改变该协议参数需版本决策，不能随设备自行变化。密码至少 8 个 Unicode 字符，UTF-8 最多 1024 字节，不静默 trim/归一化。[Web Crypto 派生密钥接口](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveKey)
 
 将 format/version/operationId/算法/KDF/salt/iv 以固定字段顺序编码为 AES-GCM additionalData。分片哈希用于及早检测传输损坏，最终以 GCM 认证判定密文完整性。解密前验证算法白名单、固定 KDF 参数、字段长度、分片个数和总大小；拒绝任意巨大迭代次数、重复编号、缺片、额外同前缀分片、未知版本或超限内容。
 

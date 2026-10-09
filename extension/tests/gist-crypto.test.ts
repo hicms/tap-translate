@@ -6,7 +6,7 @@ import { getSettings, saveSettings } from '../lib/settings/storage';
 import { stateFingerprint } from '../lib/backup/compare';
 import { encryptedFixture } from './helpers/encrypted-fixture';
 
-const password = '密码 with spaces 123';
+const password = '密码 abc12'; // Exactly eight Unicode characters, including a space.
 const source = { deviceId: '39f33a83-45ba-42e0-aa1a-26ab7c6f3f9c', label: '我的电脑' };
 const operationId = '44b6bcad-0acb-4e2d-b32f-e231cb48fb95';
 beforeEach(() => { mockBackupBrowser(); });
@@ -64,7 +64,7 @@ describe('encrypted backup protocol', () => {
       expect(() => parseManifest(JSON.stringify({ ...meta, ...patch }))).toThrow('INVALID');
     }
     expect(() => parseManifest(' '.repeat(64 * 1024 + 1))).toThrow('TOO_LARGE');
-    expect(() => checkPassword('short')).toThrow('PASSWORD_LENGTH');
+    expect(() => checkPassword('1234567')).toThrow('PASSWORD_LENGTH');
     expect(() => checkPassword('中'.repeat(400))).toThrow('PASSWORD_LENGTH');
   });
 
