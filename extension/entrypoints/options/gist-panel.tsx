@@ -44,6 +44,29 @@ export function GistPanel({ dirty, disabled, onBusy, onPreview, dataVersion, rep
   const privateWindow = chrome.extension.inIncognitoContext;
 
   useEffect(() => {
+    if (privateWindow) return;
+    let alive = true;
+    running.current = true; setStage('check'); onBusy(true);
+    void (async () => {
+      const connection = await GistSession.resume();
+      if (!alive || !connection) return;
+      session.current = connection; setAccount(connection.account);
+      const [deviceLabel, result, backup, uploads] = await Promise.all([
+        connection.deviceLabel(), connection.list(), createFullBackup(), connection.pending(),
+      ]);
+      if (!alive) return;
+      setLabel(deviceLabel); setItems(result.items); setNextPage(result.nextPage); setLocal(backup); setPending(uploads);
+      if (result.items[0]) {
+        const value = await connection.download(result.items[0].id, undefined, stage => { if (alive) setStage(stage); });
+        if (alive) select(value);
+      }
+    })().catch(error => { if (alive) setError(error); }).finally(() => {
+      if (alive) { running.current = false; setStage(null); onBusy(false); }
+    });
+    return () => { alive = false; running.current = false; onBusy(false); };
+  }, [onBusy, privateWindow]);
+
+  useEffect(() => {
     if (!session.current) return;
     let alive = true;
     void createFullBackup().then(value => { if (alive) setLocal(value); }).catch(error => { if (alive) setError(error); });
@@ -108,7 +131,7 @@ export function GistPanel({ dirty, disabled, onBusy, onPreview, dataVersion, rep
         value={password} onChange={setPassword} autoComplete="off" disabled={blocked} />
       <details><summary>{t('gistExistingLink')}</summary><Input id="gistLink" label={t('gistExistingLink')}
         value={link} onChange={setLink} disabled={blocked} /></details>
-      <p className="hint">{t('gistConsent')}</p><p className="hint">{t('gistSessionOnly')}</p>
+      <p className="hint">{t('gistConsent')}</p><p className="hint">{t(chrome.storage.session ? 'gistBrowserSession' : 'gistSessionOnly')}</p>
       <div className="actions-inline">
         <Button id="gistConnectConfirm" variant="primary" label={t('gistConnect')} isDisabled={blocked || !token || !password || privateWindow} onClick={connect} />
         <Button label={t('cancel')} isDisabled={blocked} onClick={() => { setForm(false); setToken(''); setPassword(''); }} />

@@ -368,6 +368,7 @@
   "gistExistingLink": {"message":"已有 Gist 链接（可选）"},
   "gistConsent": {"message":"已保存设置、API 密钥、请求头、网站规则和有效翻译缓存会加密后上传到 GitHub。请保管好备份密码。"},
   "gistSessionOnly": {"message":"令牌和密码仅保留在当前设置页内存中，关闭或刷新后需要重新连接。连接不会自动上传。"},
+  "gistBrowserSession": {"message":"令牌和密码保留在本次浏览器会话内存中，刷新或重新打开设置页会自动恢复连接；重启浏览器或断开连接后需要重新连接。连接不会自动上传。"},
   "gistNoBackup": {"message":"还没有 Gist 备份"},
   "gistChooseBackup": {"message":"选择备份以比较或恢复"},
   "gistSame": {"message":"设置与所选备份一致"},

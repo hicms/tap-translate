@@ -8,11 +8,15 @@ import { assertGistPermissions, requestGistPermissions } from './permissions';
 import { withDataTransferLock } from './lock';
 
 export const GIST_STATE_KEY = 'tapTranslateGist';
+export const GIST_SESSION_KEY = 'tapTranslateGistSession';
+const accountSchema = z.object({ id: z.number().int().positive(), login: z.string() });
+const sessionSchema = z.object({ token: z.string().trim().min(1).max(2048), password: z.string(),
+  account: accountSchema }).strict();
 const pendingSchema = z.object({ accountId: z.number().int().positive(), operationId: z.string().uuid(),
   gistId: z.string().regex(/^[a-f\d]{1,64}$/i).optional(), createdAt: z.string().datetime() }).strict();
 const stateSchema = z.object({
   deviceId: z.string().uuid(), label: z.string().min(1).max(100),
-  account: z.object({ id: z.number().int().positive(), login: z.string() }).optional(),
+  account: accountSchema.optional(),
   lastGist: z.object({ accountId: z.number().int().positive(), id: z.string().regex(/^[a-f\d]{1,64}$/i) }).optional(),
   pending: z.array(pendingSchema).max(100),
 }).strict();
@@ -35,7 +39,7 @@ function normalWindow(): void {
   if (chrome.extension.inIncognitoContext) throw new BackupError('PRIVATE');
 }
 
-/** One options-page session. Neither the token nor passphrase is persisted. */
+/** Credentials survive options-page reloads in browser-session memory only. */
 export class GistSession {
   private candidates = new Map<string, RemoteGist>();
   private constructor(private api: GitHubGists | null, private password: string, readonly account: GistAccount) {}
@@ -48,8 +52,42 @@ export class GistSession {
     if (!(await requestGistPermissions())) throw new BackupError('PERMISSION');
     const api = new GitHubGists(token.trim(), fetcher, assertGistPermissions);
     const account = await api.account();
-    await withDataTransferLock(async () => { await writeState({ ...await readState(), account }); });
+    await withDataTransferLock(async () => {
+      await writeState({ ...await readState(), account });
+      if (chrome.storage.session) await chrome.storage.session.set({
+        [GIST_SESSION_KEY]: { token: token.trim(), password, account },
+      });
+    });
     return new GistSession(api, password, account);
+  }
+
+  /** Restores an authorized connection without opening a permission prompt. */
+  static async resume(fetcher: typeof fetch = fetch): Promise<GistSession | null> {
+    if (chrome.extension.inIncognitoContext || !chrome.storage.session) return null;
+    const raw = (await chrome.storage.session.get(GIST_SESSION_KEY))[GIST_SESSION_KEY];
+    if (!raw) return null;
+    const parsed = sessionSchema.safeParse(raw);
+    if (!parsed.success) {
+      await chrome.storage.session.remove(GIST_SESSION_KEY);
+      return null;
+    }
+    const { token, password, account: savedAccount } = parsed.data;
+    try {
+      checkPassword(password);
+      if ((await readState()).account?.id !== savedAccount.id) {
+        await chrome.storage.session.remove(GIST_SESSION_KEY);
+        return null;
+      }
+      const api = new GitHubGists(token, fetcher, assertGistPermissions);
+      const account = await api.account();
+      if (account.id !== savedAccount.id) throw new BackupError('OWNER');
+      return new GistSession(api, password, account);
+    } catch (error) {
+      if (error instanceof BackupError && ['TOKEN', 'FORBIDDEN', 'PERMISSION', 'OWNER', 'PASSWORD_LENGTH'].includes(error.code)) {
+        await chrome.storage.session.remove(GIST_SESSION_KEY);
+      }
+      throw error;
+    }
   }
 
   private client(): GitHubGists {
@@ -144,6 +182,7 @@ export class GistSession {
 
   async disconnect(): Promise<void> {
     await withDataTransferLock(async () => {
+      if (chrome.storage.session) await chrome.storage.session.remove(GIST_SESSION_KEY);
       const state = await readState();
       delete state.account;
       delete state.lastGist;

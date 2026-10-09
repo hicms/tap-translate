@@ -32,7 +32,7 @@ async function backup(page: Page) {
   await page.locator('#gistConfirmDialog button[value="confirm"]').click();
 }
 
-test('Gist encrypts, previews, restores, undoes and retains history across a fresh connection', async ({ extContext, extensionId }) => {
+test('Gist encrypts, previews, restores, undoes and resumes after refresh', async ({ extContext, extensionId }) => {
   const mock = new MockGitHub();
   await routeGitHub(extContext, mock);
   await seedSettings(extContext, extensionId, { apiBase: 'https://api.deepseek.com', uiLocale: 'en', targetLang: 'en', apiKey: 'provider-secret-for-test' });
@@ -93,13 +93,19 @@ test('Gist encrypts, previews, restores, undoes and retains history across a fre
   await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-gist-dark.png') });
   expect((await new AxeBuilder({ page }).analyze()).violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
   await page.reload();
-  await expect(page.locator('#gistConnectBtn')).toBeVisible();
+  await expect(page.locator('#gistBackupBtn')).toBeEnabled();
+  await expect(page.locator('#gistConnectBtn')).toHaveCount(0);
+  await expect(page.locator('#gistToken')).toHaveCount(0);
   await expect(page.locator('#undoRestoreBtn')).toHaveCount(0);
-  await connect(page);
   await expect(page.locator('#gistSelected')).toContainText('QA Laptop');
+  await expect(page.locator('#gistRestoreBtn')).toBeEnabled();
+  await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-gist-resumed.png') });
   await page.locator('#gistDisconnectBtn').click();
   await page.locator('#gistConfirmDialog button[value="confirm"]').click();
   await expect(page.locator('#gistConnectBtn')).toBeVisible();
+  expect(await page.evaluate(() => chrome.storage.session.get('tapTranslateGistSession'))).toEqual({});
+  await page.reload();
+  await expect(page.locator('#gistConnectBtn')).toBeEnabled();
   expect(mock.gists.size).toBe(2);
   expect(errors).toEqual([]);
 });
@@ -130,4 +136,34 @@ test('Gist lost responses reconcile without duplicate uploads and stale previews
   await page.locator('#gistCheckBtn').click();
   await expect(page.locator('#gistError')).toContainText('could not be found');
   await expect(page.locator('#gistRestoreBtn')).toBeDisabled();
+});
+
+test('Gist resumes in a reopened settings page and clears expired credentials', async ({ extContext, extensionId }) => {
+  const mock = new MockGitHub();
+  await routeGitHub(extContext, mock);
+  await seedSettings(extContext, extensionId, { apiBase: 'https://api.deepseek.com', uiLocale: 'en', targetLang: 'en' });
+  const url = `chrome-extension://${extensionId}/options.html#section-data`;
+  const first = await extContext.newPage();
+  await first.goto(url);
+  await connect(first);
+  await first.close();
+  const page = await extContext.newPage();
+  await page.goto(url);
+  await expect(page.locator('#gistBackupBtn')).toBeEnabled();
+  await expect(page.locator('#gistStatus')).toContainText('No Gist backups');
+  await expect(page.locator('#gistToken')).toHaveCount(0);
+  expect(mock.gists.size).toBe(0);
+
+  // Ending browser-session memory requires an explicit connection again.
+  await page.evaluate(() => chrome.storage.session.remove('tapTranslateGistSession'));
+  await page.reload();
+  await expect(page.locator('#gistConnectBtn')).toBeEnabled();
+  await connect(page);
+  mock.nextStatus = 401;
+  await page.reload();
+  await expect(page.locator('#gistError')).toContainText('invalid, or expired');
+  await expect(page.locator('#gistConnectBtn')).toBeEnabled();
+  expect(await page.evaluate(() => chrome.storage.session.get('tapTranslateGistSession'))).toEqual({});
+  await connect(page);
+  expect(mock.gists.size).toBe(0);
 });

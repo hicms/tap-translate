@@ -740,6 +740,7 @@
   "gistExistingLink": {"message":"Existing Gist link (optional)"},
   "gistConsent": {"message":"Saved settings, API keys, headers, website rules and valid translation cache will be encrypted and uploaded to GitHub. Keep your backup password safe."},
   "gistSessionOnly": {"message":"The token and password stay in this settings page only. Reconnect after closing or refreshing it. Connecting does not upload anything."},
+  "gistBrowserSession": {"message":"The token and password stay in memory for this browser session. Refreshing or reopening settings restores the connection. Reconnect after restarting the browser or disconnecting. Connecting does not upload anything."},
   "gistNoBackup": {"message":"No Gist backups yet"},
   "gistChooseBackup": {"message":"Choose a backup to compare or restore"},
   "gistSame": {"message":"Settings match the selected backup"},
