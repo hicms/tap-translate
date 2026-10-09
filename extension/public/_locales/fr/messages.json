@@ -350,5 +350,18 @@
   "workspacePreferences": {"message": "Préférences de traduction"},
   "workspaceSitesHint": {"message": "Sélectionnez un site pour modifier ses préférences et ses règles de contenu."},
   "workspaceSaveHint": {"message": "Enregistrer toutes les modifications. Les nouvelles règles seront utilisées à la prochaine traduction."},
-  "workspaceBasicSettings": {"message": "Réglages de base"}
+  "workspaceBasicSettings": {"message": "Réglages de base"},
+  "backupTitle": {"message":"Sauvegarde complète"},
+  "backupExport": {"message":"Exporter la sauvegarde complète"},
+  "backupScope": {"message":"Inclut les paramètres enregistrés, clés API, en-têtes HTTP, règles intégrées et personnalisées, cache valide, état de configuration et autorisations des sites. Restaurez avec Importer les paramètres ci-dessus."},
+  "backupSavedOnly": {"message":"L’export utilise les données enregistrées. Enregistrez ou annulez les modifications avant tout export ou import."},
+  "backupUnsaved": {"message":"Des modifications ne sont pas enregistrées. Enregistrez-les ou annulez-les."},
+  "backupTooLarge": {"message":"Le fichier dépasse la limite de 20 Mio."},
+  "backupBuiltinRules": {"message":"Instantané des règles intégrées"},
+  "backupRestoreWarning": {"message":"Remplace tous les paramètres, règles, cache et état de configuration. Arrêtez la traduction et fermez les autres onglets de paramètres. Les secrets sont inclus. Les autorisations nécessitent votre accord ; les autorisations existantes sont conservées. Rechargez les pages après restauration."},
+  "backupCounts": {"message":"$1 services · $2 préférences de sites · $3 règles personnalisées · $4 profils intégrés · $5 entrées de cache valides"},
+  "backupCreated": {"message":"Création : $1 · Extension : $2"},
+  "backupPermissionHint": {"message":"Les autorisations de sites suivantes seront demandées. Les autorisations API gérées par le navigateur, raccourcis et accès en navigation privée ne peuvent pas être restaurés automatiquement."},
+  "backupPrivateWarning": {"message":"Ce JSON contient des clés API non chiffrées (y compris celles de session), des en-têtes HTTP et des traductions en cache. Gardez-le privé. Les clés de session restent temporaires après restauration. L’état des pages et les tâches en cours sont exclus."},
+  "backupRestored": {"message":"Sauvegarde complète restaurée. Rechargez les pages avant de traduire."}
 }

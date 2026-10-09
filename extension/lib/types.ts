@@ -1,3 +1,5 @@
+import type { SiteProfile } from './sites/types';
+
 export type TranslationMode = 'bilingual' | 'replace';
 export type ConnectionMode = 'direct' | 'proxy';
 
@@ -97,6 +99,8 @@ export interface Settings {
   modelParameters: ModelParameters;
   siteRules: SiteRule[];
   siteContentRules: SiteContentRule[];
+  /** null follows bundled defaults; a restored snapshot supplies all built-in rules. */
+  builtinSiteProfiles: SiteProfile[] | null;
   /**
    * Monotonic revision bumped on every save that affects translation or
    * provider identity. Content sessions compare this instead of deep equality.
@@ -121,6 +125,7 @@ export interface PublicSessionConfig {
   disabled: boolean;
   /** Only this frame hostname and its override, never the full settings. */
   siteContentRule?: SiteContentRule;
+  siteProfile?: SiteProfile | null;
 }
 
 /** Kind determines how a translation is mounted next to the original. */

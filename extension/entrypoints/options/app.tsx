@@ -24,6 +24,7 @@ import {
 } from './draft';
 import { ServiceWorkspace, type ServiceSelection } from './service-workspace';
 import { SiteWorkspace } from './site-editor';
+import { restoreFullBackup } from '../../lib/settings/backup';
 import { DataPanel } from './data-panel';
 
 const sections = ['connection', 'reading', 'sites', 'data'] as const;
@@ -72,7 +73,7 @@ function OptionsContent({
   const [selection, setSelection] = useState(() => activeSelection(settings));
   const [serviceTab, setServiceTab] = useState('basic');
   const [serviceEditing, setServiceEditing] = useState(true);
-  const [siteId, setSiteId] = useState(draft.sites[0]!.id);
+  const [siteId, setSiteId] = useState(draft.sites[0]?.id ?? '');
   const [siteTabs, setSiteTabs] = useState<Record<string, string>>({});
   const [siteEditing, setSiteEditing] = useState(true);
   const [error, setError] = useState<DraftError | null>(null);
@@ -134,13 +135,13 @@ function OptionsContent({
       id: draft.sites.find((previous) => previous.host === site.host)?.id ?? site.id,
     }));
     const host = draft.sites.find((site) => site.id === siteId)?.host;
-    const preferred = next.sites.find((site) => site.host === host) ?? next.sites[0]!;
+    const preferred = next.sites.find((site) => site.host === host) ?? next.sites[0];
     baseline.current = saved;
     setSavedValues(readOptions(next, t, false));
     clean.current = JSON.stringify(next);
     setDraft(next);
     setSelection(activeSelection(saved));
-    setSiteId(preferred.id);
+    setSiteId(preferred?.id ?? '');
     setError(null);
   }
   function reveal(element: HTMLElement) {
@@ -424,6 +425,7 @@ function OptionsContent({
                 aria-labelledby="section-sites-title"
               >
                 <SiteWorkspace
+                  profiles={draft.builtinSiteProfiles ?? undefined}
                   sites={draft.sites}
                   onChange={(sites) => edit({ sites })}
                   selectedId={siteId}
@@ -442,14 +444,20 @@ function OptionsContent({
                 aria-labelledby="section-data-title"
               >
                 <DataPanel
+                  dirty={dirty}
                   report={report}
-                  onImport={async (patch) => {
+                  onImport={async (value) => {
                     if (busyRef.current) return;
                     busyRef.current = true;
                     setBusy(true);
                     try {
-                      await persist(patch);
-                      report(t('imported'));
+                      if (value.kind === 'backup') {
+                        replace(await restoreFullBackup(value.backup));
+                        report(t('backupRestored'));
+                      } else {
+                        await persist(value.settings);
+                        report(t('imported'));
+                      }
                     } finally {
                       busyRef.current = false;
                       setBusy(false);

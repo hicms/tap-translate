@@ -32,7 +32,7 @@ The extension translates pages through the API you configure and caches translat
 - Selection overlay + context menu
 - Shortcuts: `Alt+T` translate/restore, `Alt+M` mode toggle
 - Per-site rules (auto-translate / blocklist)
-- Local-only custom headers with explicit opt-in export
+- Local-only custom headers with explicit opt-in export; full backups include credentials, rule snapshots, valid cache and setup state after confirmation
 - UI locales: English, Simplified Chinese, Traditional Chinese, Russian, Spanish, French · targets: zh-CN, en, ru, es, fr
 
 ## Architecture
@@ -102,3 +102,15 @@ make test-e2e-perf        # perf budget lab (Chromium)
 make check-npm-audit      # runtime npm audit gate
 ```
 
+
+### Full backup and restore
+
+In **Settings → Data**, save or discard pending edits, then choose **Export full backup**. After confirmation, the unencrypted JSON includes all providers and models, parameters and prompts, API keys (including session-only keys), HTTP headers, language/mode preferences, site preferences, custom content rules, built-in rule snapshots, valid persistent translation cache, setup state and host permission inventory. Keep this file private. The regular export continues to omit keys and headers unless explicitly selected.
+
+Use **Import settings** to preview and restore either format. A full backup replaces settings, rules, cache and setup state; legacy settings files still update only supplied fields. Stop translation and close other settings tabs first; refresh webpages afterward. Session keys retain their persistence preference (browsers without session storage keep the existing local-storage fallback). Files are validated before writing. Failed writes trigger compensation; failed compensation is reported alongside the original error. Browser storage areas do not offer an atomic transaction: avoid concurrent edits/translations and keep the extension open during restore.
+
+Built-in snapshots are stored separately from the 200 custom-host budget. The editor, page checks and translation use the restored snapshot, with field-level custom overrides. Hosts absent from the snapshot use generic collection. Import `{"builtinSiteProfiles":null}` to resume the installed version’s built-in rules; omitting that field preserves the snapshot.
+
+Cache entries retain their original seven-day expiry and the existing 5000-entry / 4 MiB translation budget. Expired entries are not revived; reuse still depends on compatible model/parameter/prompt-version fingerprints. Private-window memory cache is excluded and persistent cache cannot be restored in a private window. Files are limited to 20 MiB; unsupported full-backup versions are rejected before writing.
+
+Host access is requested again through the browser. Denial prevents data import. Existing grants are retained, and newly granted permissions are not revoked by data rollback. Browser-managed API permissions are recorded only. Browser shortcuts, private-window access switches, live webpage DOM, running translation tasks and remote proxy-server data cannot be restored automatically.

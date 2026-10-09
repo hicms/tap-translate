@@ -1,4 +1,12 @@
+import { z } from 'zod';
+
 const ONBOARDING_KEY = 'tapTranslateOnboarding';
+
+export const onboardingSchema = z.object({
+  completed: z.boolean(),
+  completedAt: z.number().int().nonnegative().optional(),
+  path: z.enum(['direct', 'proxy', 'server', 'later']).optional(),
+}).strict();
 
 export interface OnboardingState {
   completed: boolean;
@@ -8,6 +16,15 @@ export interface OnboardingState {
 }
 
 const DEFAULT_STATE: OnboardingState = { completed: false };
+
+export async function readOnboardingSnapshot(): Promise<OnboardingState> {
+  const stored = await chrome.storage.local.get({ [ONBOARDING_KEY]: DEFAULT_STATE });
+  return onboardingSchema.parse(stored[ONBOARDING_KEY]);
+}
+
+export async function replaceOnboardingSnapshot(state: OnboardingState): Promise<void> {
+  await chrome.storage.local.set({ [ONBOARDING_KEY]: state });
+}
 
 export async function getOnboardingState(): Promise<OnboardingState> {
   try {

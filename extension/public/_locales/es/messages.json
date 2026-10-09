@@ -350,5 +350,18 @@
   "workspacePreferences": {"message": "Preferencias de traducción"},
   "workspaceSitesHint": {"message": "Selecciona un sitio para editar sus preferencias y reglas de contenido."},
   "workspaceSaveHint": {"message": "Guardar todos los cambios. Las nuevas reglas se aplicarán al iniciar la próxima traducción."},
-  "workspaceBasicSettings": {"message": "Ajustes básicos"}
+  "workspaceBasicSettings": {"message": "Ajustes básicos"},
+  "backupTitle": {"message":"Copia de seguridad completa"},
+  "backupExport": {"message":"Exportar copia completa"},
+  "backupScope": {"message":"Incluye ajustes guardados, claves API, encabezados HTTP, reglas integradas y personalizadas, caché válida, estado de configuración y permisos de sitios. Restaure con Importar ajustes arriba."},
+  "backupSavedOnly": {"message":"La exportación utiliza datos guardados. Guarde o descarte los cambios antes de exportar o importar."},
+  "backupUnsaved": {"message":"Hay cambios sin guardar. Guárdelos o descártelos primero."},
+  "backupTooLarge": {"message":"El archivo supera el límite de 20 MiB."},
+  "backupBuiltinRules": {"message":"Instantánea de reglas integradas"},
+  "backupRestoreWarning": {"message":"Reemplaza todos los ajustes, reglas, caché y estado de configuración. Detenga la traducción y cierre otras pestañas de ajustes. Incluye secretos. Los permisos requieren aprobación; se conservan los permisos existentes. Recargue las páginas tras restaurar."},
+  "backupCounts": {"message":"$1 servicios · $2 preferencias de sitios · $3 reglas personalizadas · $4 perfiles integrados · $5 entradas válidas de caché"},
+  "backupCreated": {"message":"Creada: $1 · Extensión: $2"},
+  "backupPermissionHint": {"message":"Se solicitarán los siguientes permisos de sitios. Los permisos API del navegador, atajos y acceso en modo privado no se pueden restaurar automáticamente."},
+  "backupPrivateWarning": {"message":"Este JSON contiene claves API sin cifrar (incluidas las de sesión), encabezados HTTP y traducciones en caché. Manténgalo privado. Las claves de sesión siguen siendo temporales tras restaurar. No incluye el estado de páginas ni tareas en curso."},
+  "backupRestored": {"message":"Copia completa restaurada. Recargue las páginas antes de traducir."}
 }

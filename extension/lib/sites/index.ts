@@ -15,7 +15,7 @@ export const siteProfiles: readonly SiteProfile[] = Object.freeze([github, x, fa
 }));
 
 /** No wildcard guessing: e.g. github.io and github.com.example.org are unrelated. */
-export function resolveSiteProfile(hostname: string): SiteProfile | undefined {
+export function resolveSiteProfile(hostname: string, profiles: readonly SiteProfile[] = siteProfiles): SiteProfile | undefined {
   const host = hostname.toLowerCase();
-  return siteProfiles.find(profile => profile.hosts.includes(host));
+  return profiles.find(profile => profile.hosts.includes(host));
 }

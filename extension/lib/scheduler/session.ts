@@ -105,6 +105,7 @@ export function configChanged(
   if (!a || !b) return false;
   return (
     a.revision !== b.revision
+    || JSON.stringify(a.siteProfile) !== JSON.stringify(b.siteProfile)
     || JSON.stringify(a.siteContentRule) !== JSON.stringify(b.siteContentRule)
     || a.targetLang !== b.targetLang
     || a.mode !== b.mode
@@ -196,7 +197,7 @@ export class ContentSession {
       return this.pageResult(false, 'PAGE_UNSUPPORTED', 'site disabled');
     }
 
-    installContentPolicy(document, this.config.siteContentRule);
+    installContentPolicy(document, this.config.siteContentRule, this.config.siteProfile);
     try {
       this.batchAbort?.abort();
       this.batchAbort = new AbortController();

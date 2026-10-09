@@ -25,5 +25,5 @@ export async function configForFrame(settings: Settings, senderUrl: string, raw:
 
 /** Broadcast startup intent only; no frame receives another host's selectors. */
 export function withoutContentOverride(config: PublicSessionConfig): PublicSessionConfig {
-  return { ...config, siteContentRule: config.siteContentRule ? { host: config.siteContentRule.host } : undefined };
+  return { ...config, siteProfile: undefined, siteContentRule: config.siteContentRule ? { host: config.siteContentRule.host } : undefined };
 }

@@ -27,6 +27,7 @@ import { createFairGate, GLOBAL_TRANSLATE_LIMIT } from '../lib/scheduler/global-
 import { getOnboardingState, openOnboardingPage } from '../lib/settings/onboarding';
 import { isConnectionConfigured } from '../lib/provider/connection';
 import { createContextMenuManager } from '../lib/context-menu';
+import { invalidateChangedCache } from '../lib/cache';
 
 const CONTEXT_MENU_ID = 'tap-translate-translate-selection';
 const translateGate = createFairGate(GLOBAL_TRANSLATE_LIMIT);
@@ -98,6 +99,7 @@ export default defineBackground(() => {
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local') invalidateChangedCache(changes);
     if (area === 'sync' && changes.uiLocale) {
       void (async () => {
         const settings = await getSettings();

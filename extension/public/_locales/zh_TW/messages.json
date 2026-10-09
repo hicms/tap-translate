@@ -350,5 +350,18 @@
   "workspacePreferences": {"message": "翻譯偏好"},
   "workspaceSitesHint": {"message": "選擇網站，分別設定翻譯偏好與內容規則。"},
   "workspaceSaveHint": {"message": "儲存所有修改；下次開始翻譯時使用新規則。"},
-  "workspaceBasicSettings": {"message": "基本設定"}
+  "workspaceBasicSettings": {"message": "基本設定"},
+  "backupTitle": {"message":"完整備份"},
+  "backupExport": {"message":"匯出完整備份"},
+  "backupScope": {"message":"包含所有已儲存設定、API 金鑰、HTTP 標頭、內建規則快照、自訂規則、有效翻譯快取、引導狀態和網站權限清單。透過上方「匯入設定」還原。"},
+  "backupSavedOnly": {"message":"匯出使用已儲存資料。匯出或匯入前，請先儲存或捨棄待儲存的修改。"},
+  "backupUnsaved": {"message":"有尚未儲存的修改，請先儲存或捨棄。"},
+  "backupTooLarge": {"message":"檔案超過 20 MiB 備份大小限制。"},
+  "backupBuiltinRules": {"message":"內建規則快照"},
+  "backupRestoreWarning": {"message":"將覆寫所有已儲存設定、規則、快取和引導狀態。請先停止翻譯並關閉其他設定頁面。備份包含金鑰。網站權限需瀏覽器批准，已有授權會保留。還原後請重新整理網頁。"},
+  "backupCounts": {"message":"$1 個服務 · $2 條網站偏好 · $3 條自訂內容規則 · $4 組內建規則 · $5 條有效快取"},
+  "backupCreated": {"message":"備份時間：$1 · 擴充功能版本：$2"},
+  "backupPermissionHint": {"message":"還原時將申請以下網站權限。瀏覽器管理的 API 權限、快捷鍵及私密視窗存取權限無法自動還原。"},
+  "backupPrivateWarning": {"message":"此 JSON 包含未加密的 API 金鑰（包括僅在工作階段儲存的金鑰）、HTTP 標頭和快取譯文，請妥善保管。工作階段金鑰還原後仍僅在工作階段儲存。不包含目前網頁狀態及執行中的工作。"},
+  "backupRestored": {"message":"完整備份已還原。翻譯前請重新整理網頁。"}
 }

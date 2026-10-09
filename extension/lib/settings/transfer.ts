@@ -10,6 +10,7 @@ import {
   migrateProviderScheduling,
   modelSchedulingSchema,
 } from './schema';
+import { siteProfilesSchema } from '../sites/snapshot';
 import { modelParametersSchema } from './model-parameters';
 
 const IMPORTABLE_FIELDS = [
@@ -113,6 +114,7 @@ export function prepareSettingsImport(raw: unknown): Partial<Settings> {
       return provider;
     });
   }
+  if (data.builtinSiteProfiles !== undefined) patch.builtinSiteProfiles = siteProfilesSchema.nullable().parse(data.builtinSiteProfiles);
   if (data.siteContentRules !== undefined) patch.siteContentRules = normalizeSiteContentRules(data.siteContentRules);
   if (data.siteRules !== undefined) patch.siteRules = normalizeImportedSiteRules(data.siteRules);
   return patch as Partial<Settings>;

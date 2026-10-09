@@ -11,7 +11,7 @@ export interface SiteContentPolicy {
 export function resolveContentPolicy(
   hostname: string,
   override?: SiteContentRule,
-  profile: SiteProfile | undefined = resolveSiteProfile(hostname),
+  profile: SiteProfile | null | undefined = resolveSiteProfile(hostname),
 ): SiteContentPolicy {
   const own = override?.host === hostname.toLowerCase() ? override : undefined;
   const content = own?.content ?? profile?.content;

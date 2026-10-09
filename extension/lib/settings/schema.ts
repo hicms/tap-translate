@@ -1,6 +1,7 @@
 import { SettingsValidationError, normalizeSiteHost } from './site-host';
 export { SettingsValidationError, normalizeSiteHost, validationCodeOf } from './site-host';
 import { normalizeSiteContentRules } from '../sites/validation';
+import { siteProfilesSchema } from '../sites/snapshot';
 import { z } from 'zod';
 import type {
   Settings, SiteRule, TargetLang, TranslationMode, UiLocale, ProviderConfig,
@@ -267,6 +268,7 @@ export const settingsSchema = z.object({
   }),
   activeProviderId: z.string(),
   modelParameters: modelParametersSchema.default({}),
+  builtinSiteProfiles: siteProfilesSchema.nullable().default(null),
   siteContentRules: z.unknown().transform((v) => normalizeSiteContentRules(v)).default([]),
   siteRules: z.unknown().transform(normalizeSiteRules).default([]),
   revision: z.coerce.number().int().min(0).catch(0).default(0),
@@ -294,6 +296,7 @@ export function createDefaultSettings(): Settings {
     modelParameters: defaultModelParameters(),
     siteRules: [],
     siteContentRules: [],
+    builtinSiteProfiles: null,
     revision: 0,
   };
 }

@@ -4,6 +4,7 @@ import { Input, Select, Textarea, focusField } from '../../ui/fields';
 import { EditorTabs } from '../../ui/editor-tabs';
 import { languageKey, useLocale } from '../../ui/locale';
 import { SUPPORTED_TARGET_LANGS } from '../../lib/settings/schema';
+import type { SiteProfile } from '../../lib/sites/types';
 import { resolveSiteProfile, siteProfiles } from '../../lib/sites';
 import { resolveContentPolicy } from '../../lib/sites/policy';
 import { checkCurrentPage } from './site-content-check';
@@ -11,15 +12,17 @@ import { contentErrorMessage, DraftError, newSite, readSiteContent, type SiteDra
 
 function ContentEditor({
   site,
+  profiles,
   onChange,
   error,
 }: {
   site: SiteDraft;
+  profiles: readonly SiteProfile[];
   onChange: (value: SiteDraft) => void;
   error: DraftError | null;
 }) {
   const { t } = useLocale();
-  const profile = resolveSiteProfile(site.host);
+  const profile = resolveSiteProfile(site.host, profiles) ?? null;
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState({ snapshot: '', text: '', error: '' });
   const signature = JSON.stringify(site);
@@ -36,7 +39,7 @@ function ContentEditor({
   );
   let effective = '';
   try {
-    const policy = resolveContentPolicy(site.host, readSiteContent(site, t, false));
+    const policy = resolveContentPolicy(site.host, readSiteContent(site, t, false), profile);
     const content =
       policy.content.mode === 'generic'
         ? t('contentGeneric')
@@ -51,7 +54,7 @@ function ContentEditor({
     setChecking(true);
     try {
       const draft = readSiteContent(site, t);
-      const response = await checkCurrentPage(draft);
+      const response = await checkCurrentPage(draft, profile);
       if (!mounted.current || latest.current !== signature) return;
       const counts = [
         ...response.content.map((item) => `${t('contentSelectors')}: ${item.selector} — ${item.count}`),
@@ -160,6 +163,7 @@ function ContentEditor({
 
 export function SiteWorkspace({
   sites,
+  profiles = siteProfiles,
   onChange,
   selectedId,
   onSelect,
@@ -170,6 +174,7 @@ export function SiteWorkspace({
   error,
 }: {
   sites: SiteDraft[];
+  profiles?: readonly SiteProfile[];
   onChange: (sites: SiteDraft[]) => void;
   selectedId: string;
   onSelect: (id: string) => void;
@@ -184,7 +189,7 @@ export function SiteWorkspace({
   const selected = sites.find((site) => site.id === selectedId);
   const query = search.trim().toLowerCase();
   const groups = [
-    ...siteProfiles.map((profile) => ({
+    ...profiles.map((profile) => ({
       name: profile.hosts[0]!,
       hosts: profile.hosts,
       builtin: true,
@@ -274,7 +279,7 @@ export function SiteWorkspace({
         </aside>
         <div id="siteRuleRows" className="site-cards">
           {sites.map((site) => {
-            const profile = site.builtin ? resolveSiteProfile(site.host) : undefined;
+            const profile = site.builtin ? resolveSiteProfile(site.host, profiles) : undefined;
             const tab = tabs[site.id] ?? 'preferences';
             return (
               <article
@@ -344,7 +349,7 @@ export function SiteWorkspace({
                       label={t('removeSite')}
                       onClick={() => {
                         onChange(sites.filter((item) => item.id !== site.id));
-                        onSelect(sites.find((item) => item.id !== site.id)!.id);
+                        onSelect(sites.find((item) => item.id !== site.id)?.id ?? '');
                       }}
                     />
                   ) : null}
@@ -418,7 +423,7 @@ export function SiteWorkspace({
                     hidden={tab !== 'content'}
                     aria-label={t('contentRules')}
                   >
-                    <ContentEditor site={site} onChange={update} error={error} />
+                    <ContentEditor profiles={profiles} site={site} onChange={update} error={error} />
                   </section>
                 </div>
               </article>

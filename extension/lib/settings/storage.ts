@@ -4,6 +4,7 @@ import {
   normalizeCustomHeaders,
   normalizeTargetLang,
   parseSettings,
+  migrateSettingsRaw,
   validateSettings,
   providerAffectingChanged,
   SETTINGS_SCHEMA_VERSION,
@@ -14,7 +15,7 @@ import {
 export const SECRET_KEYS = ['apiKey'] as const;
 type SecretKey = (typeof SECRET_KEYS)[number];
 /** Credentials often live in custom headers; never replicate them through sync. */
-export const DEVICE_LOCAL_KEYS = ['customHeaders', 'providers', 'activeProviderId', 'modelParameters', 'siteContentRules'] as const;
+export const DEVICE_LOCAL_KEYS = ['customHeaders', 'providers', 'activeProviderId', 'modelParameters', 'siteContentRules', 'builtinSiteProfiles'] as const;
 type DeviceLocalKey = (typeof DEVICE_LOCAL_KEYS)[number];
 
 const META_LOCAL_KEY = 'tapTranslateSettingsMeta';
@@ -81,12 +82,14 @@ function splitPersistence(settings: Partial<Settings>): {
   return { secrets, deviceLocal, syncable };
 }
 
-async function readMeta(): Promise<SettingsMeta> {
+async function readMeta(strict = false): Promise<SettingsMeta> {
   try {
     const stored = await chrome.storage.local.get({ [META_LOCAL_KEY]: { revision: 0 } });
     const meta = stored[META_LOCAL_KEY] as SettingsMeta;
+    if (strict && (!Number.isSafeInteger(meta?.revision) || meta.revision < 0)) throw new Error('Invalid settings revision');
     return { revision: Number(meta?.revision) || 0 };
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     return { revision: 0 };
   }
 }
@@ -95,7 +98,7 @@ async function writeMeta(meta: SettingsMeta): Promise<void> {
   await chrome.storage.local.set({ [META_LOCAL_KEY]: meta });
 }
 
-export async function getSettings(): Promise<Settings> {
+export async function getSettings(options?: { strict: boolean }): Promise<Settings> {
   const defaults = createDefaultSettings();
   const syncDefaults: Record<string, unknown> = { ...defaults };
   for (const key of [...SECRET_KEYS, ...DEVICE_LOCAL_KEYS]) delete syncDefaults[key];
@@ -109,32 +112,33 @@ export async function getSettings(): Promise<Settings> {
     chrome.storage.sync.get('customHeaders'),
     chrome.storage.local.get([...SECRET_KEYS, ...DEVICE_LOCAL_KEYS, PROVIDER_SECRETS_KEY, PROVIDER_SCHEMA_KEY]),
   ]);
-  const meta = await readMeta();
+  const meta = await readMeta(options?.strict);
 
   let apiKey: string = (localStored.apiKey as string) || '';
   const legacyKey = (syncStored.apiKey as string) || '';
   if (!apiKey && legacyKey) {
     apiKey = legacyKey;
-    await chrome.storage.local.set({ apiKey });
+    if (!options?.strict) await chrome.storage.local.set({ apiKey });
   }
   if (!apiKey && chrome.storage.session) {
     try {
       const sessionStored = await chrome.storage.session.get({ apiKey: '' });
       apiKey = (sessionStored.apiKey as string) || '';
-    } catch {
+    } catch (error) {
+      if (options?.strict) throw error;
       /* session storage unavailable */
     }
   }
-  if (legacyKey) await chrome.storage.sync.remove('apiKey');
+  if (legacyKey && !options?.strict) await chrome.storage.sync.remove('apiKey');
 
   const hasLocalHeaders = Object.prototype.hasOwnProperty.call(localStored, 'customHeaders');
   const localHeaders = normalizeCustomHeaders(localStored.customHeaders);
   const legacyHeaders = normalizeCustomHeaders(legacyHeadersStored.customHeaders);
   const customHeaders = hasLocalHeaders ? localHeaders : legacyHeaders;
-  if (!hasLocalHeaders && Object.keys(legacyHeaders).length) {
+  if (!options?.strict && !hasLocalHeaders && Object.keys(legacyHeaders).length) {
     await chrome.storage.local.set({ customHeaders });
   }
-  if (Object.prototype.hasOwnProperty.call(legacyHeadersStored, 'customHeaders')) {
+  if (!options?.strict && Object.prototype.hasOwnProperty.call(legacyHeadersStored, 'customHeaders')) {
     await chrome.storage.sync.remove('customHeaders');
   }
 
@@ -144,7 +148,7 @@ export async function getSettings(): Promise<Settings> {
   if (Array.isArray(providers)) {
     const secrets = (localStored[PROVIDER_SECRETS_KEY] ?? {}) as Record<string, ProviderSecrets>;
     const sessionStored: Record<string, unknown> = chrome.storage.session
-      ? await chrome.storage.session.get(PROVIDER_SESSION_KEYS).catch(() => ({}))
+      ? await chrome.storage.session.get(PROVIDER_SESSION_KEYS).catch((error) => { if (options?.strict) throw error; return {}; })
       : {};
     const sessionKeys = (sessionStored[PROVIDER_SESSION_KEYS] ?? {}) as Record<string, string>;
     providers = providers.map((provider: ProviderConfig) => ({
@@ -160,9 +164,10 @@ export async function getSettings(): Promise<Settings> {
     apiKey,
     customHeaders,
     siteContentRules: localStored.siteContentRules ?? [],
+    builtinSiteProfiles: localStored.builtinSiteProfiles ?? null,
     revision: meta.revision || Number(syncStored.revision) || 0,
   };
-  const settings = parseSettings(merged);
+  const settings = options?.strict ? validateSettings(migrateSettingsRaw(merged)) : parseSettings(merged);
   if (!Array.isArray(providers) && apiKey && !localStored.apiKey && !legacyKey) {
     settings.providers[0]!.persistApiKey = false;
   }
@@ -171,13 +176,13 @@ export async function getSettings(): Promise<Settings> {
   const needsSchemaWrite = syncStored.schemaVersion !== settings.schemaVersion
     || localStored[PROVIDER_SCHEMA_KEY] !== SETTINGS_SCHEMA_VERSION
     || syncStored.uiLocale == null || !Array.isArray(providers);
-  if (needsSchemaWrite) {
+  if (needsSchemaWrite && !options?.strict) {
     const { syncable } = splitPersistence(settings);
     await persistProviders(settings);
     await chrome.storage.local.set({ siteContentRules: settings.siteContentRules });
     await chrome.storage.sync.set(syncable);
   }
-  if (meta.revision !== settings.revision) {
+  if (!options?.strict && meta.revision !== settings.revision) {
     await writeMeta({ revision: settings.revision });
   }
 
@@ -239,6 +244,7 @@ export async function saveSettings(
     || current.maxConcurrent !== merged.maxConcurrent
     || current.batchSize !== merged.batchSize
     || current.uiLocale !== merged.uiLocale
+    || JSON.stringify(current.builtinSiteProfiles) !== JSON.stringify(merged.builtinSiteProfiles)
     || JSON.stringify(current.siteContentRules) !== JSON.stringify(merged.siteContentRules)
     || JSON.stringify(current.siteRules) !== JSON.stringify(merged.siteRules)
   );
@@ -268,6 +274,9 @@ export async function saveSettings(
     syncPatch.batchSize = next.batchSize;
   }
 
+  if ('builtinSiteProfiles' in patch) {
+    await chrome.storage.local.set({ builtinSiteProfiles: next.builtinSiteProfiles });
+  }
   if ('siteContentRules' in patch) {
     await chrome.storage.local.set({ siteContentRules: next.siteContentRules });
   }
@@ -283,7 +292,9 @@ export async function saveSettings(
     // from leaving credentials in sync after this version has saved.
     ops.push(chrome.storage.sync.remove('customHeaders'));
   }
-  await Promise.all(ops);
+  const writes = await Promise.allSettled(ops);
+  const failure = writes.find((result) => result.status === 'rejected');
+  if (failure?.status === 'rejected') throw failure.reason;
   return next;
 }
 

@@ -1,10 +1,11 @@
+import type { SiteProfile } from '../../lib/sites/types';
 import type { SiteContentRule } from '../../lib/types';
 import { ensureFrameContentScript, isRestrictedUrl, originPattern } from '../../lib/inject';
 import { contentCheckRequestSchema, contentCheckResultSchema, type ContentCheckResult } from '../../lib/sites/check';
 
 /** A settings tab is not a webpage: use the most recently visited other tab. */
-export async function checkCurrentPage(rule: SiteContentRule): Promise<ContentCheckResult> {
-  const request = contentCheckRequestSchema.parse({ action: 'checkSiteContent', rule });
+export async function checkCurrentPage(rule: SiteContentRule, profile?: SiteProfile | null): Promise<ContentCheckResult> {
+  const request = contentCheckRequestSchema.parse({ action: 'checkSiteContent', rule, profile });
   const own = await chrome.tabs.getCurrent();
   const tabs = await chrome.tabs.query({ currentWindow: true });
   const target = tabs.filter(tab => tab.id !== own?.id).sort((a, b) => Number(b.active) - Number(a.active) || (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0))[0];

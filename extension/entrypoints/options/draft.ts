@@ -54,7 +54,7 @@ export interface SiteDraft {
   ignore?: string;
 }
 export interface OptionsDraft
-  extends Pick<Settings, 'targetLang' | 'uiLocale' | 'mode' | 'activeProviderId'> {
+  extends Pick<Settings, 'targetLang' | 'uiLocale' | 'mode' | 'activeProviderId' | 'builtinSiteProfiles'> {
   providers: ProviderDraft[];
   sites: SiteDraft[];
 }
@@ -123,12 +123,14 @@ export function newSite(host = '', builtin = false): SiteDraft {
   };
 }
 export function optionsDraft(settings: Settings): OptionsDraft {
+  const profiles = settings.builtinSiteProfiles ?? siteProfiles;
   const hosts = new Set([
-    ...siteProfiles.flatMap((profile) => [...profile.hosts]),
+    ...profiles.flatMap((profile) => [...profile.hosts]),
     ...settings.siteRules.map((rule) => rule.host),
     ...settings.siteContentRules.map((rule) => rule.host),
   ]);
   return {
+    builtinSiteProfiles: settings.builtinSiteProfiles,
     targetLang: settings.targetLang,
     uiLocale: settings.uiLocale,
     mode: settings.mode,
@@ -140,7 +142,7 @@ export function optionsDraft(settings: Settings): OptionsDraft {
       return {
         ...newSite(
           host,
-          siteProfiles.some((profile) => profile.hosts.includes(host)),
+          profiles.some((profile) => profile.hosts.includes(host)),
         ),
         policy: rule?.disabled ? 'never' : rule?.auto ? 'auto' : 'global',
         mode: rule?.mode ?? '',
@@ -339,6 +341,7 @@ export function readOptions(draft: OptionsDraft, t: Translate, validate = true):
     targetLang: draft.targetLang,
     mode: draft.mode,
     siteRules,
+    builtinSiteProfiles: draft.builtinSiteProfiles,
     siteContentRules: normalizeSiteContentRules(contentRules),
   };
 }

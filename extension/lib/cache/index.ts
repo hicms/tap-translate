@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { PublicSessionConfig } from '../types';
 
 /**
@@ -206,6 +207,55 @@ export async function clearCache(): Promise<void> {
 
 export function clearMemoryCache(): void {
   l1.clear();
+}
+
+const cacheSnapshotSchema = z.record(
+  z.string().regex(/^dr:c3:[a-f0-9]{64}$/),
+  z.object({ t: z.string().min(1), at: z.number().int().nonnegative(), b: z.number().int().nonnegative() }).strict(),
+);
+export type CacheSnapshot = z.infer<typeof cacheSnapshotSchema>;
+
+/** Imported bytes are recomputed; timestamps retain the original expiry. */
+export function parseCacheSnapshot(raw: unknown): CacheSnapshot {
+  const snapshot = cacheSnapshotSchema.parse(raw);
+  const entries = Object.entries(snapshot);
+  if (entries.length > MAX_ENTRIES || entries.reduce((sum, [, entry]) => sum + utf8Bytes(entry.t), 0) > MAX_BYTES) {
+    throw new Error('Cache snapshot exceeds storage limits');
+  }
+  const now = Date.now();
+  if (entries.some(([, entry]) => entry.at > now)) throw new Error('Cache timestamp is in the future');
+  return Object.fromEntries(entries.filter(([, entry]) => isFresh(entry, now))
+    .map(([key, entry]) => [key, { ...entry, b: utf8Bytes(entry.t) }]));
+}
+
+export async function exportCacheSnapshot(): Promise<CacheSnapshot> {
+  if (isIncognitoContext()) return {};
+  const all = await chrome.storage.local.get(null);
+  const rows = Object.entries(all).filter(([key, entry]) => key.startsWith(NS) && isFresh(entry));
+  rows.sort((a, b) => b[1].at - a[1].at);
+  let bytes = 0;
+  const selected = rows.filter(([, entry], index) => {
+    bytes += utf8Bytes(entry.t);
+    return index < MAX_ENTRIES && bytes <= MAX_BYTES;
+  });
+  return parseCacheSnapshot(Object.fromEntries(selected));
+}
+
+/** Replaces only cache-owned keys; storage errors must reach the restore coordinator. */
+export async function replaceCacheSnapshot(snapshot: CacheSnapshot): Promise<void> {
+  if (isIncognitoContext()) {
+    if (Object.keys(snapshot).length) throw new Error('Cannot restore persistent cache in a private window');
+    return;
+  }
+  const all = await chrome.storage.local.get(null);
+  const stale = Object.keys(all).filter(key => isCacheKey(key) && !(key in snapshot));
+  if (stale.length) await chrome.storage.local.remove(stale);
+  await chrome.storage.local.set(snapshot);
+  clearMemoryCache();
+}
+
+export function invalidateChangedCache(changes: Record<string, chrome.storage.StorageChange>): void {
+  for (const key of Object.keys(changes)) if (isCacheKey(key)) l1.delete(key);
 }
 
 /** Test helpers — not used in production paths. */

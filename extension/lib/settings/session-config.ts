@@ -1,6 +1,7 @@
 import type { PublicSessionConfig, Settings, SiteRule, TranslationMode, TargetLang } from '../types';
 import { providerFingerprint } from './schema';
 import { normalizeTargetLang } from './schema';
+import { resolveSiteProfile } from '../sites';
 import { effectiveForHost } from './storage';
 
 function newSessionId(): string {
@@ -27,6 +28,7 @@ export async function buildPublicSessionConfig(
     batchSize: settings.batchSize,
     providerFingerprint: await providerFingerprint(settings),
     disabled: eff.disabled,
+    siteProfile: settings.builtinSiteProfiles == null ? undefined : resolveSiteProfile(host, settings.builtinSiteProfiles) ?? null,
     siteContentRule: { host, ...settings.siteContentRules.find(rule => rule.host === host) },
   };
 }

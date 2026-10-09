@@ -350,5 +350,18 @@
   "workspacePreferences": {"message": "翻译偏好"},
   "workspaceSitesHint": {"message": "选择站点，分别设置翻译偏好和内容适配。"},
   "workspaceSaveHint": {"message": "保存所有修改；下次启动翻译时使用新规则。"},
-  "workspaceBasicSettings": {"message": "基本设置"}
+  "workspaceBasicSettings": {"message": "基本设置"},
+  "backupTitle": {"message":"完整备份"},
+  "backupExport": {"message":"导出完整备份"},
+  "backupScope": {"message":"包含所有已保存设置、API 密钥、HTTP 请求头、内置规则快照、自定义规则、有效翻译缓存、引导状态和网站权限清单。通过上方“导入设置”恢复。"},
+  "backupSavedOnly": {"message":"导出读取已保存数据。导出或导入前，请先保存或放弃待保存的修改。"},
+  "backupUnsaved": {"message":"有尚未保存的修改，请先保存或放弃。"},
+  "backupTooLarge": {"message":"文件超过 20 MiB 备份大小限制。"},
+  "backupBuiltinRules": {"message":"内置规则快照"},
+  "backupRestoreWarning": {"message":"将覆盖全部已保存设置、规则、缓存和引导状态。请先停止翻译并关闭其他设置页面。备份包含密钥。网站权限需浏览器批准，已有授权会保留。恢复后请刷新网页。"},
+  "backupCounts": {"message":"$1 个服务 · $2 条网站偏好 · $3 条自定义内容规则 · $4 组内置规则 · $5 条有效缓存"},
+  "backupCreated": {"message":"备份时间：$1 · 扩展版本：$2"},
+  "backupPermissionHint": {"message":"恢复时将申请以下网站权限。浏览器管理的 API 权限、快捷键和隐私窗口访问权限无法自动恢复。"},
+  "backupPrivateWarning": {"message":"此 JSON 包含未加密的 API 密钥（包括仅会话保存的密钥）、HTTP 请求头和缓存译文，请妥善保管。会话密钥恢复后仍仅在会话中保存。不包含当前网页状态及正在运行的任务。"},
+  "backupRestored": {"message":"完整备份已恢复。翻译前请刷新网页。"}
 }

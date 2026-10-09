@@ -726,5 +726,18 @@
   "workspacePreferences": {"message": "Translation preferences"},
   "workspaceSitesHint": {"message": "Select a site to edit its translation preferences and content rules."},
   "workspaceSaveHint": {"message": "Save all changes. New rules apply the next time translation starts."},
-  "workspaceBasicSettings": {"message": "Basic settings"}
+  "workspaceBasicSettings": {"message": "Basic settings"},
+  "backupTitle": {"message":"Full backup"},
+  "backupExport": {"message":"Export full backup"},
+  "backupScope": {"message":"Includes all saved settings, API keys, HTTP headers, built-in rule snapshots, custom rules, valid translation cache, setup state and host permission list. Restore through Import settings above."},
+  "backupSavedOnly": {"message":"Exports use saved data. Save or discard pending changes before exporting or importing."},
+  "backupUnsaved": {"message":"You have unsaved changes. Save or discard them first."},
+  "backupTooLarge": {"message":"The file exceeds the 20 MiB backup limit."},
+  "backupBuiltinRules": {"message":"Built-in rule snapshot"},
+  "backupRestoreWarning": {"message":"This replaces all saved settings, rules, cache and setup state. Stop translation and close other settings tabs first. Secrets are included. Browser permissions require approval; existing permissions are retained. Refresh webpages after restoring."},
+  "backupCounts": {"message":"$1 services · $2 site preferences · $3 custom content rules · $4 built-in profiles · $5 valid cache entries"},
+  "backupCreated": {"message":"Created: $1 · Extension: $2"},
+  "backupPermissionHint": {"message":"The following host permissions will be requested. Browser-managed API permissions, shortcuts and private-window access cannot be restored automatically."},
+  "backupPrivateWarning": {"message":"This JSON contains unencrypted API keys (including session-only keys), HTTP headers and cached translations. Keep it private. Session keys remain session-only after restore. Current webpage state and running tasks are not included."},
+  "backupRestored": {"message":"Full backup restored. Refresh webpages before translating."}
 }

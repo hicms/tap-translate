@@ -1,5 +1,6 @@
 import { EDITABLE, NO_TEXT } from '../dom-const';
 import { resolveContentPolicy, type SiteContentPolicy } from '../sites/policy';
+import type { SiteProfile } from '../sites/types';
 import type { SiteContentRule } from '../types';
 
 // Ancestor-aware: <pre><code><span> and <button><span> are also protected.
@@ -23,8 +24,8 @@ export function registerContentSkeleton(root: Element): void {
 }
 
 /** Installed once after restoring the prior session, never for draft previews. */
-export function installContentPolicy(doc: Document, override?: SiteContentRule): void {
-  const policy = resolveContentPolicy(doc.location?.hostname ?? '', override);
+export function installContentPolicy(doc: Document, override?: SiteContentRule, profile?: SiteProfile | null): void {
+  const policy = resolveContentPolicy(doc.location?.hostname ?? '', override, profile);
   documents.set(doc, {
     mode: policy.content.mode,
     content: policy.content.mode === 'selectors' ? policy.content.selectors.join(', ') : undefined,
