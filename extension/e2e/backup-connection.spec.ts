@@ -15,7 +15,7 @@ test('full backup download, preview and restore preserves credentials, rules, ca
         builtinSiteProfiles: [{ id: 'snapshot', hosts: ['127.0.0.1'], content: ['#p1'], ignore: ['.old-ignore'] }],
         siteContentRules: [{ host: '127.0.0.1', ignore: [] }],
         tapTranslateOnboarding: { completed: true, completedAt: 12345, path: 'direct' },
-        [key]: { t: 'Saved translation', at: Date.now(), b: 17 },
+        [key]: { t: 'Saved translation', at: Date.now(), b: 17, epoch: 7 },
       });
     }, cacheKey);
     const page = await extContext.newPage();
@@ -39,6 +39,8 @@ test('full backup download, preview and restore preserves credentials, rules, ca
     const backup = JSON.parse(serialized);
     expect(backup.settings.providers[0].apiKey).toBe('backup-test-key');
     expect(backup.cache[cacheKey].t).toBe('Saved translation');
+    expect(backup.cache[cacheKey]).not.toHaveProperty('epoch');
+    expect(await page.evaluate(async key => (await chrome.storage.local.get(key))[key].epoch, cacheKey)).toBe(7);
     expect(backup.settings.builtinSiteProfiles[0].hosts).toEqual(['127.0.0.1']);
 
     await page.evaluate(async key => {

@@ -238,7 +238,9 @@ export async function exportCacheSnapshot(): Promise<CacheSnapshot> {
     bytes += utf8Bytes(entry.t);
     return index < MAX_ENTRIES && bytes <= MAX_BYTES;
   });
-  return parseCacheSnapshot(Object.fromEntries(selected));
+  // Local entries can carry runtime metadata (such as epoch); only the portable
+  // cache fields belong in exports. Leave the original stored entries intact.
+  return parseCacheSnapshot(Object.fromEntries(selected.map(([key, { t, at, b }]) => [key, { t, at, b }])));
 }
 
 /** Replaces only cache-owned keys; storage errors must reach the restore coordinator. */

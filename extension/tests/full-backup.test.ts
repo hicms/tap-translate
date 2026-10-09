@@ -43,6 +43,21 @@ async function populated() {
 afterEach(() => { clearMemoryCache(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('full backup', () => {
+  it('exports cached translations with local metadata without mutating storage and restores them on another device', async () => {
+    const before = await populated();
+    const [key, entry] = Object.entries(before.cache)[0]!;
+    const stored = { ...entry, epoch: 7 };
+    await chrome.storage.local.set({ [key]: stored });
+    const exported = await createFullBackup();
+    expect(exported.cache).toEqual(before.cache);
+    expect((await chrome.storage.local.get(key))[key]).toEqual(stored);
+    expect(() => parseCacheSnapshot({ [key]: stored })).toThrow();
+    browser();
+    clearMemoryCache();
+    await restoreFullBackup(parseFullBackup(JSON.parse(JSON.stringify(exported))));
+    expect(await lookup(['Hello'], { targetLang: 'zh-CN', providerFingerprint: 'backup-test' })).toEqual(['你好']);
+  });
+
   it('restores all data to an empty device, including 200 custom hosts and session credentials', async () => {
     const backup = await populated();
     const target = browser();
