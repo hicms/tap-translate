@@ -25,10 +25,13 @@ test('full backup download, preview and restore preserves credentials, rules, ca
     await page.goto(`chrome-extension://${extensionId}/options.html#section-data`);
     await expect(page).toHaveTitle(/TapTranslate/);
     await expect(page.locator('#section-data')).toBeVisible();
-    await page.locator('#fullBackupBtn').click();
+    await expect(page.locator('#fullBackupBtn')).toHaveCount(0);
+    await expect(page.locator('#includeSecrets')).toHaveCount(0);
+    await expect(page.locator('#importBtn')).toBeVisible();
+    await page.locator('#exportBtn').click();
     await expect(page.locator('#dataConfirmDialog')).toContainText('unencrypted');
     await page.locator('#dataConfirmDialog button[value="cancel"]').click();
-    await page.locator('#fullBackupBtn').click();
+    await page.locator('#exportBtn').click();
     const downloadEvent = page.waitForEvent('download');
     await page.locator('#dataConfirmDialog button[value="confirm"]').click();
     const download = await downloadEvent;
@@ -45,7 +48,9 @@ test('full backup download, preview and restore preserves credentials, rules, ca
     }, cacheKey);
     await page.reload();
     const file = { name: 'full-backup.json', mimeType: 'application/json', buffer: Buffer.from(serialized) };
-    await page.locator('#importFile input[type="file"]').setInputFiles(file);
+    const chooserEvent = page.waitForEvent('filechooser');
+    await page.locator('#importBtn').click();
+    await (await chooserEvent).setFiles(file);
     await expect(page.locator('#backupPreview')).toContainText('1 built-in profiles');
     await expect(page.locator('#importPreviewSummary')).toContainText('replaces all');
     await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-backup-preview.png'), fullPage: true });
@@ -54,7 +59,7 @@ test('full backup download, preview and restore preserves credentials, rules, ca
     await page.locator('#importFile input[type="file"]').setInputFiles(file);
     await page.locator('#importPreviewDialog button[value="confirm"]').click();
     await expect(page.locator('#importPreviewDialog')).toBeHidden();
-    await expect(page.locator('#saveStatus')).toContainText('Full backup restored');
+    await expect(page.locator('#saveStatus')).toContainText('Data imported');
     const restored = await page.evaluate(async key => ({
       local: await chrome.storage.local.get(['builtinSiteProfiles', 'siteContentRules', 'tapTranslateOnboarding', key]),
       sync: await chrome.storage.sync.get('targetLang'),
@@ -70,10 +75,10 @@ test('full backup download, preview and restore preserves credentials, rules, ca
     await expect(article.locator('#p1 .tap-translate-target')).toBeVisible();
     await expect(article.locator('#p2 .tap-translate-target')).toHaveCount(0);
     await article.close();
-    await page.locator('#fullBackupBtn').scrollIntoViewIfNeeded();
+    await page.locator('#exportBtn').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-backup-desktop.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.locator('#fullBackupBtn').scrollIntoViewIfNeeded();
+    await page.locator('#exportBtn').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-backup-mobile.png'), fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.locator('#importFile input[type="file"]').setInputFiles({ ...file, buffer: Buffer.from(JSON.stringify({ ...backup, version: 999 })) });
@@ -84,7 +89,15 @@ test('full backup download, preview and restore preserves credentials, rules, ca
     await page.locator('#importPreviewDialog button[value="confirm"]').click();
     await expect(page.locator('#importPreviewDialog')).toBeHidden();
     await page.reload();
-    await expect(page.locator('#fullBackupBtn')).toBeVisible();
+    await expect(page.locator('#exportBtn')).toBeVisible();
+    await page.evaluate(() => chrome.storage.sync.set({ uiLocale: 'zh-CN' }));
+    await page.reload();
+    await expect(page.locator('#exportBtn')).toHaveText('导出');
+    await expect(page.locator('#importBtn')).toHaveText('导入');
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-transfer-desktop.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(os.tmpdir(), 'tap-translate-transfer-mobile.png'), fullPage: true });
     expect(errors).toEqual([]);
   } finally { await mock.close(); }
 });

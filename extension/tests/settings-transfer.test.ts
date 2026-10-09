@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Settings } from '../lib/types';
 import { parseSettings } from '../lib/settings/schema';
-import { buildSettingsExport, prepareSettingsImport } from '../lib/settings/transfer';
+import { prepareSettingsImport } from '../lib/settings/transfer';
 
 function settings(): Settings {
   return parseSettings({
@@ -20,32 +20,6 @@ function settings(): Settings {
     revision: 2,
   });
 }
-
-describe('settings export', () => {
-  it('excludes both private credential classes by default', () => {
-    const output = buildSettingsExport(settings(), {
-      includeApiKey: false,
-      includeCustomHeaders: false,
-    });
-    expect(output.apiKey).toBeUndefined();
-    expect(output.customHeaders).toBeUndefined();
-    expect(output.providers?.[0]?.apiKey).toBeUndefined();
-    expect(output.providers?.[0]?.customHeaders).toBeUndefined();
-    expect(JSON.stringify(output)).not.toContain('private-key');
-    expect(JSON.stringify(output)).not.toContain('private-header');
-    expect(output.siteRules).toEqual([{ host: 'example.com', auto: true }]);
-  });
-
-  it('includes each private class only when explicitly requested', () => {
-    const output = buildSettingsExport(settings(), {
-      includeApiKey: true,
-      includeCustomHeaders: true,
-    });
-    expect(output.apiKey).toBe('private-key');
-    expect(output.customHeaders).toEqual({ 'X-Token': 'private-header' });
-    expect(output.providers?.[0]?.apiKey).toBe('private-key');
-  });
-});
 
 describe('settings import preview', () => {
   it('imports v5 global scheduling into models and preserves explicit model scheduling', () => {

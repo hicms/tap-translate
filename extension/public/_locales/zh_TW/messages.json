@@ -42,7 +42,6 @@
   "errorContentScript": {"message": "無法注入內容指令碼"},
   "exportSettings": {"message": "匯出"},
   "importSettings": {"message": "匯入"},
-  "includeSecrets": {"message": "匯出時包含 API 金鑰"},
   "exported": {"message": "已匯出"},
   "imported": {"message": "已匯入"},
   "importFailed": {"message": "匯入失敗"},
@@ -185,7 +184,6 @@
   "unsavedChanges": {"message": "尚未儲存的變更"},
   "discarded": {"message": "變更已捨棄"},
   "confirmClearCache": {"message": "要清除此裝置上的所有快取譯文嗎？"},
-  "confirmExportSecrets": {"message": "此匯出檔包含您的 API 金鑰。請只儲存在私密位置。要繼續嗎？"},
   "apiBasePlaceholder": {"message": "https://api.deepseek.com"},
   "apiKeyPlaceholder": {"message": "sk-..."},
   "modelPlaceholder": {"message": "deepseek-v4-flash"},
@@ -217,9 +215,6 @@
   "privacyTextDestination": {"message": "可見頁面文字只會傳送到你設定的 API 端點。"},
   "privacySecretsLocal": {"message": "API 金鑰和自訂 HTTP 標頭只保留在此裝置，不會透過瀏覽器同步。"},
   "privacyNoCloud": {"message": "TapTranslate 本身不提供翻譯雲端服務。"},
-  "includeCustomHeaders": {"message": "在匯出檔中包含自訂 HTTP 標頭"},
-  "exportPrivacyHint": {"message": "API 金鑰和自訂 HTTP 標頭可用於存取服務商；除非你明確勾選，否則不會匯出。"},
-  "confirmExportCustomHeaders": {"message": "此匯出檔包含可能含有憑證的自訂 HTTP 標頭。請只儲存在私密位置。要繼續嗎？"},
   "importPreviewTitle": {"message": "檢查要匯入的設定"},
   "importPreviewSummary": {"message": "只有列出的值會改變。未列出的私密資料會保留在此裝置。"},
   "importWillUpdate": {"message": "將更新：$1"},
@@ -351,9 +346,7 @@
   "workspaceSitesHint": {"message": "選擇網站，分別設定翻譯偏好與內容規則。"},
   "workspaceSaveHint": {"message": "儲存所有修改；下次開始翻譯時使用新規則。"},
   "workspaceBasicSettings": {"message": "基本設定"},
-  "backupTitle": {"message":"完整備份"},
-  "backupExport": {"message":"匯出完整備份"},
-  "backupScope": {"message":"包含所有已儲存設定、API 金鑰、HTTP 標頭、內建規則快照、自訂規則、有效翻譯快取、引導狀態和網站權限清單。透過上方「匯入設定」還原。"},
+  "backupScope": {"message":"匯出和匯入所有已儲存的設定、規則、金鑰、有效翻譯快取和引導狀態。"},
   "backupSavedOnly": {"message":"匯出使用已儲存資料。匯出或匯入前，請先儲存或捨棄待儲存的修改。"},
   "backupUnsaved": {"message":"有尚未儲存的修改，請先儲存或捨棄。"},
   "backupTooLarge": {"message":"檔案超過 20 MiB 備份大小限制。"},
@@ -363,5 +356,5 @@
   "backupCreated": {"message":"備份時間：$1 · 擴充功能版本：$2"},
   "backupPermissionHint": {"message":"還原時將申請以下網站權限。瀏覽器管理的 API 權限、快捷鍵及私密視窗存取權限無法自動還原。"},
   "backupPrivateWarning": {"message":"此 JSON 包含未加密的 API 金鑰（包括僅在工作階段儲存的金鑰）、HTTP 標頭和快取譯文，請妥善保管。工作階段金鑰還原後仍僅在工作階段儲存。不包含目前網頁狀態及執行中的工作。"},
-  "backupRestored": {"message":"完整備份已還原。翻譯前請重新整理網頁。"}
+  "backupRestored": {"message":"資料已匯入。翻譯前請重新整理網頁。"}
 }

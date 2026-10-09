@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFullBackup, parseFullBackup, parseImportFile, restoreFullBackup, BackupRestoreError } from '../lib/settings/backup';
 import { getSettings, saveSettings } from '../lib/settings/storage';
-import { buildSettingsExport } from '../lib/settings/transfer';
+import { buildSettingsExport } from './helpers/legacy-settings-export';
 import { readOnboardingSnapshot, replaceOnboardingSnapshot } from '../lib/settings/onboarding';
 import { clearMemoryCache, exportCacheSnapshot, lookup, parseCacheSnapshot, store } from '../lib/cache';
 import { buildPublicSessionConfig } from '../lib/settings/session-config';

@@ -76,7 +76,7 @@ test('React onboarding tests connection and saves a session-only key', async ({ 
   } finally { await mock.close(); }
 });
 
-test('React data controls preview imports and export private data only after opt-in', async ({ extContext, extensionId, sw }) => {
+test('React data controls export all data after confirmation and import legacy files', async ({ extContext, extensionId, sw }) => {
   await seedSettings(extContext, extensionId, { apiBase: 'https://api.example.com/v1', apiKey: 'export-test-secret', uiLocale: 'en', targetLang: 'en' });
   await sw.evaluate(async () => {
     const secrets = { 'e2e-provider': { apiKey: 'export-test-secret', customHeaders: { 'X-Private': 'export-test-header' } } };
@@ -87,14 +87,10 @@ test('React data controls preview imports and export private data only after opt
   async function download() {
     const pending = page.waitForEvent('download');
     await page.locator('#exportBtn').click();
+    await page.locator('#dataConfirmDialog button[value="confirm"]').click();
     const file = await pending;
     return readFile((await file.path())!, 'utf8');
   }
-  const publicExport = await download();
-  expect(publicExport).not.toContain('export-test-secret');
-  expect(publicExport).not.toContain('export-test-header');
-  await page.locator('#includeSecrets input').check();
-  await page.locator('#includeCustomHeaders input').check();
   await page.locator('#exportBtn').click();
   await expect(page.locator('#dataConfirmDialog')).toContainText(/API key/i);
   await expect(page.locator('#dataConfirmDialog')).toContainText('headers');
@@ -117,7 +113,7 @@ test('React data controls preview imports and export private data only after opt
   await expect.poll(() => sw.evaluate(async () => (await chrome.storage.sync.get('targetLang')).targetLang)).toBe('fr');
   await page.reload();
   const after = await download();
-  expect(JSON.parse(after).targetLang).toBe('fr');
+  expect(JSON.parse(after).settings.targetLang).toBe('fr');
   await page.locator('[data-section-nav="section-connection"]').click();
   await expect(page.locator('#apiKey input')).toHaveValue('export-test-secret');
 });

@@ -32,7 +32,7 @@ The extension translates pages through the API you configure and caches translat
 - Selection overlay + context menu
 - Shortcuts: `Alt+T` translate/restore, `Alt+M` mode toggle
 - Per-site rules (auto-translate / blocklist)
-- Local-only custom headers with explicit opt-in export; full backups include credentials, rule snapshots, valid cache and setup state after confirmation
+- Unified export/import of all settings, credentials, rule snapshots, valid cache and setup state, with a sensitive-data confirmation before export
 - UI locales: English, Simplified Chinese, Traditional Chinese, Russian, Spanish, French · targets: zh-CN, en, ru, es, fr
 
 ## Architecture
@@ -103,11 +103,11 @@ make check-npm-audit      # runtime npm audit gate
 ```
 
 
-### Full backup and restore
+### Export and import
 
-In **Settings → Data**, save or discard pending edits, then choose **Export full backup**. After confirmation, the unencrypted JSON includes all providers and models, parameters and prompts, API keys (including session-only keys), HTTP headers, language/mode preferences, site preferences, custom content rules, built-in rule snapshots, valid persistent translation cache, setup state and host permission inventory. Keep this file private. The regular export continues to omit keys and headers unless explicitly selected.
+In **Settings → Data**, save or discard pending edits, then choose **Export**. After confirmation, the unencrypted JSON includes all providers and models, parameters and prompts, API keys (including session-only keys), HTTP headers, language/mode preferences, site preferences, custom content rules, built-in rule snapshots, valid persistent translation cache, setup state and host permission inventory. Keep this file private.
 
-Use **Import settings** to preview and restore either format. A full backup replaces settings, rules, cache and setup state; legacy settings files still update only supplied fields. Stop translation and close other settings tabs first; refresh webpages afterward. Session keys retain their persistence preference (browsers without session storage keep the existing local-storage fallback). Files are validated before writing. Failed writes trigger compensation; failed compensation is reported alongside the original error. Browser storage areas do not offer an atomic transaction: avoid concurrent edits/translations and keep the extension open during restore.
+Use the adjacent **Import** button to select a file, preview its contents and restore either format. A full backup replaces settings, rules, cache and setup state; legacy settings files still update only supplied fields. Stop translation and close other settings tabs first; refresh webpages afterward. Session keys retain their persistence preference (browsers without session storage keep the existing local-storage fallback). Files are validated before writing. Failed writes trigger compensation; failed compensation is reported alongside the original error. Browser storage areas do not offer an atomic transaction: avoid concurrent edits/translations and keep the extension open during restore.
 
 Built-in snapshots are stored separately from the 200 custom-host budget. The editor, page checks and translation use the restored snapshot, with field-level custom overrides. Hosts absent from the snapshot use generic collection. Import `{"builtinSiteProfiles":null}` to resume the installed version’s built-in rules; omitting that field preserves the snapshot.
 

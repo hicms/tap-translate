@@ -1,13 +1,10 @@
 import { useContext, useRef, useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
-import { FileInput } from '@astryxdesign/core/FileInput';
-import { Check, FormDisabled } from '../../ui/fields';
+import { FormDisabled } from '../../ui/fields';
 import { Dialog } from '../../ui/dialog';
 import { useLocale } from '../../ui/locale';
 import { clearCache } from '../../lib/cache';
-import { getSettings } from '../../lib/settings/storage';
 import { createFullBackup, MAX_BACKUP_BYTES, parseImportFile, type PreparedImport } from '../../lib/settings/backup';
-import { buildSettingsExport } from '../../lib/settings/transfer';
 
 export function DataPanel({
   onImport,
@@ -19,25 +16,21 @@ export function DataPanel({
   report: (text: string, error?: boolean) => void;
 }) {
   const { t } = useLocale();
-  const [includeSecrets, setIncludeSecrets] = useState(false);
-  const [includeHeaders, setIncludeHeaders] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<PreparedImport | null>(null);
   const [importing, setImporting] = useState(false);
-  const [confirmation, setConfirmation] = useState<'export' | 'backup' | 'cache' | null>(null);
+  const [confirmation, setConfirmation] = useState<'export' | 'cache' | null>(null);
   const locked = useContext(FormDisabled);
   const [exporting, setExporting] = useState(false);
   const exportingRef = useRef(false);
   const blocked = locked || importing || exporting;
   const previewSettings = preview?.kind === 'settings' ? preview.settings : preview?.backup.settings;
-  async function exportSettings(full = false) {
+  async function exportSettings() {
     if (dirty || blocked || exportingRef.current) return;
     exportingRef.current = true;
     setExporting(true);
     try {
-      const output = full ? await createFullBackup() : buildSettingsExport(await getSettings(), {
-        includeApiKey: includeSecrets,
-        includeCustomHeaders: includeHeaders,
-      });
+      const output = await createFullBackup();
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(output, null, 2)], {
           type: 'application/json',
@@ -45,10 +38,7 @@ export function DataPanel({
       );
       const link = document.createElement('a');
       link.href = url;
-      link.download =
-        full ? `tap-translate-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json` : includeSecrets || includeHeaders
-          ? 'tap-translate-settings-with-private-data.json'
-          : 'tap-translate-settings.json';
+      link.download = `tap-translate-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       report(t('exported'));
@@ -94,6 +84,7 @@ export function DataPanel({
       </div>
       <div className="data-block">
         <h3>{t('sectionImportExport')}</h3>
+        <p className="hint">{t('backupScope')}</p>
         <p className="hint">{t('backupSavedOnly')}</p>
         {dirty ? <p role="status">{t('backupUnsaved')}</p> : null}
         <div className="actions-inline">
@@ -101,55 +92,33 @@ export function DataPanel({
             id="exportBtn"
             label={t('exportSettings')}
             isDisabled={blocked || dirty}
-            onClick={() => {
-              if (includeSecrets || includeHeaders) setConfirmation('export');
-              else void exportSettings();
-            }}
+            onClick={() => setConfirmation('export')}
           />
-          <div id="importFile" className="import-file">
-            <FileInput
-              label={t('importSettings')}
-              isLabelHidden
-              placeholder={t('importSettings')}
-              value={null}
-              isDisabled={blocked || dirty}
-              width="100%"
+          <Button
+            id="importBtn"
+            label={t('importSettings')}
+            isDisabled={blocked || dirty}
+            onClick={() => fileInput.current?.click()}
+          />
+          <div id="importFile" hidden>
+            <input
+              ref={fileInput}
+              type="file"
               accept="application/json,.json"
-              onChange={(files) => {
-                const selected = Array.isArray(files) ? files[0] : files;
+              disabled={blocked || dirty}
+              onChange={(event) => {
+                const selected = event.currentTarget.files?.[0];
+                event.currentTarget.value = '';
                 if (selected && selected.size > MAX_BACKUP_BYTES) { report(t('backupTooLarge'), true); return; }
-                if (selected)
-                  void selected
-                    .text()
-                    .then((text) => setPreview(parseImportFile(text)))
-                    .catch((error) =>
-                      report(
-                        `${t('importFailed')}: ${error instanceof Error ? error.message : String(error)}`,
-                        true,
-                      ),
-                    );
+                if (selected) void selected.text()
+                  .then(text => setPreview(parseImportFile(text)))
+                  .catch(error => report(
+                    `${t('importFailed')}: ${error instanceof Error ? error.message : String(error)}`, true,
+                  ));
               }}
             />
           </div>
         </div>
-        <Check
-          id="includeSecrets"
-          label={t('includeSecrets')}
-          checked={includeSecrets}
-          onChange={setIncludeSecrets}
-        />
-        <Check
-          id="includeCustomHeaders"
-          label={t('includeCustomHeaders')}
-          checked={includeHeaders}
-          onChange={setIncludeHeaders}
-        />
-        <p className="hint">{t('exportPrivacyHint')}</p>
-      </div>
-      <div className="data-block">
-        <h3>{t('backupTitle')}</h3>
-        <p className="hint">{t('backupScope')}</p>
-        <Button id="fullBackupBtn" label={t('backupExport')} isDisabled={blocked || dirty} onClick={() => setConfirmation('backup')} />
       </div>
       <Dialog
         id="importPreviewDialog"
@@ -205,30 +174,25 @@ export function DataPanel({
       </Dialog>
       <Dialog
         id="dataConfirmDialog"
-        title={t(confirmation === 'cache' ? 'clearCache' : confirmation === 'backup' ? 'backupExport' : 'exportSettings')}
+        title={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
         open={confirmation !== null}
         onClose={() => setConfirmation(null)}
       >
         {confirmation === 'cache' ? (
           <p>{t('confirmClearCache')}</p>
-        ) : confirmation === 'backup' ? <p>{t('backupPrivateWarning')}</p> : (
-          <>
-            {includeSecrets ? <p>{t('confirmExportSecrets')}</p> : null}
-            {includeHeaders ? <p>{t('confirmExportCustomHeaders')}</p> : null}
-          </>
-        )}
+        ) : <p>{t('backupPrivateWarning')}</p>}
         <div className="actions">
           <Button value="cancel" label={t('cancel')} onClick={() => setConfirmation(null)} />
           <Button
             value="confirm"
             variant="primary"
-            label={t(confirmation === 'cache' ? 'clearCache' : confirmation === 'backup' ? 'backupExport' : 'exportSettings')}
+            label={t(confirmation === 'cache' ? 'clearCache' : 'exportSettings')}
             onClick={() => {
               if (confirmation === 'cache')
                 void clearCache()
                   .then(() => report(t('cacheCleared')))
                   .catch((error) => report(String(error), true));
-              else void exportSettings(confirmation === 'backup');
+              else void exportSettings();
               setConfirmation(null);
             }}
           />

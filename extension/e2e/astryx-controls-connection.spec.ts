@@ -149,9 +149,9 @@ for (const display of [
     await settingsTab(page, 'data');
     await healthy(page);
     await capture(page, `${display.name}-data`);
-    await page.locator('#includeSecrets input').check();
-    await expect(page.locator('#includeSecrets input')).toBeChecked();
-    await page.locator('#includeSecrets input').uncheck();
+    if (await page.locator('#discardBtn').isEnabled()) await page.locator('#discardBtn').click();
+    await expect(page.locator('#exportBtn')).toBeVisible();
+    await expect(page.locator('#importBtn')).toBeVisible();
     await page.locator('#importFile input[type="file"]').setInputFiles({
       name: 'settings.json',
       mimeType: 'application/json',

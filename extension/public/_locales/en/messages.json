@@ -122,9 +122,6 @@
   "importSettings": {
     "message": "Import"
   },
-  "includeSecrets": {
-    "message": "Include API key in export"
-  },
   "exported": {
     "message": "Exported"
   },
@@ -543,9 +540,6 @@
   "confirmClearCache": {
     "message": "Clear all cached translations on this device?"
   },
-  "confirmExportSecrets": {
-    "message": "This export includes your API key. Save it only somewhere private. Continue?"
-  },
   "apiBasePlaceholder": {
     "message": "https://api.deepseek.com"
   },
@@ -593,9 +587,6 @@
   "privacyTextDestination": {"message": "Visible page text is sent only to the API endpoint you configure."},
   "privacySecretsLocal": {"message": "API keys and custom HTTP headers stay on this device and are not browser-synced."},
   "privacyNoCloud": {"message": "TapTranslate does not operate a translation cloud of its own."},
-  "includeCustomHeaders": {"message": "Include custom HTTP headers in export"},
-  "exportPrivacyHint": {"message": "API keys and custom headers can grant access to your provider. They are excluded unless you explicitly include them."},
-  "confirmExportCustomHeaders": {"message": "This export includes custom HTTP headers, which may contain credentials. Save it only somewhere private. Continue?"},
   "importPreviewTitle": {"message": "Review imported settings"},
   "importPreviewSummary": {"message": "Only the listed values will change. Private values that are not listed stay on this device."},
   "importWillUpdate": {"message": "Update: $1"},
@@ -727,9 +718,7 @@
   "workspaceSitesHint": {"message": "Select a site to edit its translation preferences and content rules."},
   "workspaceSaveHint": {"message": "Save all changes. New rules apply the next time translation starts."},
   "workspaceBasicSettings": {"message": "Basic settings"},
-  "backupTitle": {"message":"Full backup"},
-  "backupExport": {"message":"Export full backup"},
-  "backupScope": {"message":"Includes all saved settings, API keys, HTTP headers, built-in rule snapshots, custom rules, valid translation cache, setup state and host permission list. Restore through Import settings above."},
+  "backupScope": {"message":"Export and import all saved settings, rules, credentials, valid translation cache and setup state."},
   "backupSavedOnly": {"message":"Exports use saved data. Save or discard pending changes before exporting or importing."},
   "backupUnsaved": {"message":"You have unsaved changes. Save or discard them first."},
   "backupTooLarge": {"message":"The file exceeds the 20 MiB backup limit."},
@@ -739,5 +728,5 @@
   "backupCreated": {"message":"Created: $1 · Extension: $2"},
   "backupPermissionHint": {"message":"The following host permissions will be requested. Browser-managed API permissions, shortcuts and private-window access cannot be restored automatically."},
   "backupPrivateWarning": {"message":"This JSON contains unencrypted API keys (including session-only keys), HTTP headers and cached translations. Keep it private. Session keys remain session-only after restore. Current webpage state and running tasks are not included."},
-  "backupRestored": {"message":"Full backup restored. Refresh webpages before translating."}
+  "backupRestored": {"message":"Data imported. Refresh webpages before translating."}
 }

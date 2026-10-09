@@ -42,7 +42,6 @@
   "errorContentScript": {"message": "Échec de l'injection du script de contenu"},
   "exportSettings": {"message": "Exporter"},
   "importSettings": {"message": "Importer"},
-  "includeSecrets": {"message": "Inclure la clé API dans l'exportation"},
   "exported": {"message": "Exporté"},
   "imported": {"message": "Importé"},
   "importFailed": {"message": "Échec de l'importation"},
@@ -185,7 +184,6 @@
   "unsavedChanges": {"message": "Modifications non enregistrées"},
   "discarded": {"message": "Modifications ignorées"},
   "confirmClearCache": {"message": "Supprimer toutes les traductions en cache sur cet appareil ?"},
-  "confirmExportSecrets": {"message": "Cette exportation contient votre clé API. Enregistrez-la uniquement dans un emplacement privé. Continuer ?"},
   "apiBasePlaceholder": {"message": "https://api.deepseek.com"},
   "apiKeyPlaceholder": {"message": "sk-..."},
   "modelPlaceholder": {"message": "deepseek-v4-flash"},
@@ -217,9 +215,6 @@
   "privacyTextDestination": {"message": "Le texte visible de la page est envoyé uniquement au point de terminaison d’API que vous configurez."},
   "privacySecretsLocal": {"message": "Les clés API et les en-têtes HTTP personnalisés restent sur cet appareil et ne sont pas synchronisés par le navigateur."},
   "privacyNoCloud": {"message": "TapTranslate n’exploite pas son propre cloud de traduction."},
-  "includeCustomHeaders": {"message": "Inclure les en-têtes HTTP personnalisés dans l’exportation"},
-  "exportPrivacyHint": {"message": "Les clés API et en-têtes personnalisés peuvent donner accès à votre fournisseur. Ils sont exclus sauf si vous les incluez explicitement."},
-  "confirmExportCustomHeaders": {"message": "Cette exportation contient des en-têtes HTTP personnalisés qui peuvent inclure des identifiants. Enregistrez-la uniquement dans un emplacement privé. Continuer ?"},
   "importPreviewTitle": {"message": "Vérifier les paramètres importés"},
   "importPreviewSummary": {"message": "Seules les valeurs listées seront modifiées. Les valeurs privées absentes resteront sur cet appareil."},
   "importWillUpdate": {"message": "Mettre à jour : $1"},
@@ -351,9 +346,7 @@
   "workspaceSitesHint": {"message": "Sélectionnez un site pour modifier ses préférences et ses règles de contenu."},
   "workspaceSaveHint": {"message": "Enregistrer toutes les modifications. Les nouvelles règles seront utilisées à la prochaine traduction."},
   "workspaceBasicSettings": {"message": "Réglages de base"},
-  "backupTitle": {"message":"Sauvegarde complète"},
-  "backupExport": {"message":"Exporter la sauvegarde complète"},
-  "backupScope": {"message":"Inclut les paramètres enregistrés, clés API, en-têtes HTTP, règles intégrées et personnalisées, cache valide, état de configuration et autorisations des sites. Restaurez avec Importer les paramètres ci-dessus."},
+  "backupScope": {"message":"Exportez et importez tous les paramètres enregistrés, règles, identifiants, cache valide et état de configuration."},
   "backupSavedOnly": {"message":"L’export utilise les données enregistrées. Enregistrez ou annulez les modifications avant tout export ou import."},
   "backupUnsaved": {"message":"Des modifications ne sont pas enregistrées. Enregistrez-les ou annulez-les."},
   "backupTooLarge": {"message":"Le fichier dépasse la limite de 20 Mio."},
@@ -363,5 +356,5 @@
   "backupCreated": {"message":"Création : $1 · Extension : $2"},
   "backupPermissionHint": {"message":"Les autorisations de sites suivantes seront demandées. Les autorisations API gérées par le navigateur, raccourcis et accès en navigation privée ne peuvent pas être restaurés automatiquement."},
   "backupPrivateWarning": {"message":"Ce JSON contient des clés API non chiffrées (y compris celles de session), des en-têtes HTTP et des traductions en cache. Gardez-le privé. Les clés de session restent temporaires après restauration. L’état des pages et les tâches en cours sont exclus."},
-  "backupRestored": {"message":"Sauvegarde complète restaurée. Rechargez les pages avant de traduire."}
+  "backupRestored": {"message":"Données importées. Rechargez les pages avant de traduire."}
 }

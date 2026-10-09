@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getSettings, saveSettings } from '../lib/settings/storage';
-import { buildSettingsExport, prepareSettingsImport } from '../lib/settings/transfer';
+import { prepareSettingsImport } from '../lib/settings/transfer';
+import { buildSettingsExport } from './helpers/legacy-settings-export';
 import { createDefaultSettings, providerFingerprint, SETTINGS_SCHEMA_VERSION } from '../lib/settings/schema';
 import { buildPublicSessionConfig } from '../lib/settings/session-config';
 import { configForFrame, withoutContentOverride } from '../lib/settings/frame-config';

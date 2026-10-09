@@ -85,8 +85,8 @@ test('options page renders site rules + cache controls', async ({ context, exten
   await settingsTab(options, 'sites');
   await options.locator('#addSiteRuleBtn').click();
   await expect(options.locator('#siteRuleRows .site-card:not([data-builtin])')).toHaveCount(1);
-  await expect(options.locator('#includeSecrets input')).not.toBeChecked();
-  await expect(options.locator('#includeCustomHeaders input')).not.toBeChecked();
+  await expect(options.locator('#includeSecrets')).toHaveCount(0);
+  await expect(options.locator('#includeCustomHeaders')).toHaveCount(0);
 });
 
 test('popup and options have no serious axe violations', async ({ context, extensionId }) => {

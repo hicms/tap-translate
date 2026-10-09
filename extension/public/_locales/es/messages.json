@@ -42,7 +42,6 @@
   "errorContentScript": {"message": "No se pudo inyectar el script de contenido"},
   "exportSettings": {"message": "Exportar"},
   "importSettings": {"message": "Importar"},
-  "includeSecrets": {"message": "Incluir la clave de API en la exportación"},
   "exported": {"message": "Exportado"},
   "imported": {"message": "Importado"},
   "importFailed": {"message": "Error de importación"},
@@ -185,7 +184,6 @@
   "unsavedChanges": {"message": "Cambios sin guardar"},
   "discarded": {"message": "Cambios descartados"},
   "confirmClearCache": {"message": "¿Borrar todas las traducciones almacenadas en caché de este dispositivo?"},
-  "confirmExportSecrets": {"message": "Esta exportación incluye tu clave de API. Guárdala solo en un lugar privado. ¿Quieres continuar?"},
   "apiBasePlaceholder": {"message": "https://api.deepseek.com"},
   "apiKeyPlaceholder": {"message": "sk-..."},
   "modelPlaceholder": {"message": "deepseek-v4-flash"},
@@ -217,9 +215,6 @@
   "privacyTextDestination": {"message": "El texto visible de la página solo se envía al punto de conexión de API que configures."},
   "privacySecretsLocal": {"message": "Las claves de API y los encabezados HTTP personalizados permanecen en este dispositivo y no se sincronizan con el navegador."},
   "privacyNoCloud": {"message": "TapTranslate no opera su propia nube de traducción."},
-  "includeCustomHeaders": {"message": "Incluir encabezados HTTP personalizados en la exportación"},
-  "exportPrivacyHint": {"message": "Las claves de API y los encabezados personalizados pueden dar acceso a tu proveedor. Se excluyen hasta que los incluyas explícitamente."},
-  "confirmExportCustomHeaders": {"message": "Esta exportación incluye encabezados HTTP personalizados que pueden contener credenciales. Guárdala solo en un lugar privado. ¿Quieres continuar?"},
   "importPreviewTitle": {"message": "Revisar los ajustes importados"},
   "importPreviewSummary": {"message": "Solo cambiarán los valores enumerados. Los valores privados que no aparezcan se conservarán en este dispositivo."},
   "importWillUpdate": {"message": "Actualizar: $1"},
@@ -351,9 +346,7 @@
   "workspaceSitesHint": {"message": "Selecciona un sitio para editar sus preferencias y reglas de contenido."},
   "workspaceSaveHint": {"message": "Guardar todos los cambios. Las nuevas reglas se aplicarán al iniciar la próxima traducción."},
   "workspaceBasicSettings": {"message": "Ajustes básicos"},
-  "backupTitle": {"message":"Copia de seguridad completa"},
-  "backupExport": {"message":"Exportar copia completa"},
-  "backupScope": {"message":"Incluye ajustes guardados, claves API, encabezados HTTP, reglas integradas y personalizadas, caché válida, estado de configuración y permisos de sitios. Restaure con Importar ajustes arriba."},
+  "backupScope": {"message":"Exporte e importe todos los ajustes guardados, reglas, credenciales, caché válida y estado de configuración."},
   "backupSavedOnly": {"message":"La exportación utiliza datos guardados. Guarde o descarte los cambios antes de exportar o importar."},
   "backupUnsaved": {"message":"Hay cambios sin guardar. Guárdelos o descártelos primero."},
   "backupTooLarge": {"message":"El archivo supera el límite de 20 MiB."},
@@ -363,5 +356,5 @@
   "backupCreated": {"message":"Creada: $1 · Extensión: $2"},
   "backupPermissionHint": {"message":"Se solicitarán los siguientes permisos de sitios. Los permisos API del navegador, atajos y acceso en modo privado no se pueden restaurar automáticamente."},
   "backupPrivateWarning": {"message":"Este JSON contiene claves API sin cifrar (incluidas las de sesión), encabezados HTTP y traducciones en caché. Manténgalo privado. Las claves de sesión siguen siendo temporales tras restaurar. No incluye el estado de páginas ni tareas en curso."},
-  "backupRestored": {"message":"Copia completa restaurada. Recargue las páginas antes de traducir."}
+  "backupRestored": {"message":"Datos importados. Recargue las páginas antes de traducir."}
 }

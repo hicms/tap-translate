@@ -169,10 +169,6 @@ fieldset {
 .astryx-selector-popup [role='listbox'] {
   max-height: min(300px, calc(100dvh - 32px));
 }
-.import-file {
-  min-width: 0;
-  width: min(280px, 100%);
-}
 @media (max-width: 560px) {
   .field-grid {
     grid-template-columns: 1fr;

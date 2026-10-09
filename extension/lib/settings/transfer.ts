@@ -26,28 +26,6 @@ const IMPORTABLE_FIELDS = [
   'activeProviderId',
 ] as const;
 
-export interface SettingsExportOptions {
-  includeApiKey: boolean;
-  includeCustomHeaders: boolean;
-}
-
-/** Produce a portable settings JSON without leaking private device credentials by default. */
-export function buildSettingsExport(
-  settings: Settings,
-  options: SettingsExportOptions,
-): Partial<Settings> {
-  const output: Partial<Settings> = { ...settings };
-  if (!options.includeApiKey) delete output.apiKey;
-  if (!options.includeCustomHeaders) delete output.customHeaders;
-  output.providers = settings.providers.map((provider) => {
-    const copy = { ...provider };
-    if (!options.includeApiKey) Reflect.deleteProperty(copy, 'apiKey');
-    if (!options.includeCustomHeaders) Reflect.deleteProperty(copy, 'customHeaders');
-    return copy;
-  });
-  return output;
-}
-
 function normalizeImportedSiteRules(raw: unknown): SiteRule[] {
   if (!Array.isArray(raw)) throw new TypeError('siteRules must be an array');
   const seen = new Set<string>();
