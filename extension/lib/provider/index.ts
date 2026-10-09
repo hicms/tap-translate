@@ -89,7 +89,21 @@ export async function translateTexts(
   if (!texts.length) return [];
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
-  const content = await callLLM(texts, settings, signal);
+  let content: string;
+  try {
+    content = await callLLM(texts, settings, signal);
+  } catch (err) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    // A fetch/body abort without our signal being cancelled is an upstream
+    // interruption. Keep it retryable rather than cancelling the page session.
+    if (isAbortError(err)) {
+      throw new TapTranslateError('NETWORK_ERROR', {
+        detail: err instanceof Error ? err.message : String(err),
+        cause: err,
+      });
+    }
+    throw err;
+  }
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   try {

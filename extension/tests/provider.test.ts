@@ -3,6 +3,7 @@ import { translateTexts } from '../lib/provider';
 import type { Settings } from '../lib/types';
 import { parseSettings } from '../lib/settings/schema';
 import { defaultModelParameters } from '../lib/settings/model-parameters';
+import { isAbortError } from '../lib/errors';
 
 function settings(partial: Partial<Settings> = {}): Settings {
   return parseSettings({
@@ -138,6 +139,43 @@ describe('translateTexts / DeepSeek V4 thinking', () => {
     ac.abort();
     await expect(translateTexts(['Hi'], settings(), ac.signal)).rejects.toMatchObject({ name: 'AbortError' });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['fetch', 'body'] as const)('retries an upstream %s abort without cancelling the session', async stage => {
+    const error = new DOMException('The operation was aborted.', 'AbortError');
+    const fetchMock = vi.mocked(fetch);
+    if (stage === 'fetch') fetchMock.mockRejectedValueOnce(error);
+    else {
+      const response = new Response('{}');
+      vi.spyOn(response, 'json').mockRejectedValueOnce(error);
+      fetchMock.mockResolvedValueOnce(response);
+    }
+    const ac = new AbortController();
+    const failure = await translateTexts(['Hello'], settings(), ac.signal).catch(err => err);
+    expect(ac.signal.aborted).toBe(false);
+    expect(failure).toMatchObject({ code: 'NETWORK_ERROR', retryable: true, cause: error });
+    expect(isAbortError(failure)).toBe(false);
+  });
+
+  it('treats an Error named AbortError as a retryable interruption without a signal', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(Object.assign(new Error('SESSION_CANCELLED'), { name: 'AbortError' }));
+    await expect(translateTexts(['Hello'], settings())).rejects.toMatchObject({ code: 'NETWORK_ERROR', retryable: true });
+  });
+
+  it.each(['fetch', 'body'] as const)('preserves actual cancellation during %s', async stage => {
+    const ac = new AbortController();
+    const abort = async () => {
+      ac.abort();
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    };
+    if (stage === 'fetch') vi.mocked(fetch).mockImplementationOnce(abort);
+    else {
+      const response = new Response('{}');
+      vi.spyOn(response, 'json').mockImplementationOnce(abort);
+      vi.mocked(fetch).mockResolvedValueOnce(response);
+    }
+    await expect(translateTexts(['Hello'], settings(), ac.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it('uses the selected model parameters and additional translation instructions', async () => {

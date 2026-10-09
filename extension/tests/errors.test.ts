@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TapTranslateError,
   classifyHttpStatus,
+  isAbortError,
   sanitizeDetail,
   toUserFacingError,
   userFacing,
@@ -68,6 +69,16 @@ describe('toUserFacingError', () => {
     const uf = toUserFacingError(new DOMException('Aborted', 'AbortError'));
     expect(uf.code).toBe('SESSION_CANCELLED');
     expect(uf.retryable).toBe(false);
+  });
+
+  it.each([
+    new Error('network connection aborted'),
+    new TapTranslateError('NETWORK_ERROR', { detail: 'The operation was aborted.' }),
+    new TapTranslateError('UPSTREAM_TIMEOUT', { detail: 'request aborted after timeout' }),
+  ])('does not swallow upstream failures mentioning abort: %s', err => {
+    expect(isAbortError(err)).toBe(false);
+    expect(toUserFacingError(err).retryable).toBe(true);
+    expect(toUserFacingError(err).code).not.toBe('SESSION_CANCELLED');
   });
 });
 

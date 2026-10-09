@@ -162,10 +162,13 @@ export function isExtensionContextInvalidated(err: unknown): boolean {
 
 export function isAbortError(err: unknown): boolean {
   if (!err) return false;
+  // Classified upstream failures may mention "aborted" in their detail.
+  // Their code, not that wording, determines whether they should be retried.
+  if (err instanceof TapTranslateError) return false;
   if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
     return true;
   }
-  return err instanceof Error && (err.name === 'AbortError' || /aborted|abort/i.test(err.message));
+  return err instanceof Error && err.name === 'AbortError';
 }
 
 /**

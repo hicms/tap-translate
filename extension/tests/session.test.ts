@@ -207,6 +207,27 @@ describe('ContentSession scheduling state machine', () => {
     session.dispose('stop');
   });
 
+  it('recovers from an aborted upstream connection through the retry queue', async () => {
+    vi.useFakeTimers();
+    paragraphs(1);
+    vi.mocked(translateBatchViaPort)
+      .mockRejectedValueOnce(new TapTranslateError('NETWORK_ERROR', { detail: 'The operation was aborted.' }))
+      .mockResolvedValueOnce(['恢复后的译文']);
+    const session = new ContentSession(config());
+    try {
+      const result = session.start();
+      await vi.advanceTimersByTimeAsync(400);
+      expect(session.status().translating).toBe(true);
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(translateBatchViaPort).toHaveBeenCalledTimes(2);
+      expect(await result).toMatchObject({ success: true, count: 1, failed: 0 });
+      expect(session.status().translating).toBe(false);
+      expect(document.body.textContent).toContain('恢复后的译文');
+    } finally {
+      session.dispose('stop');
+    }
+  });
+
   it('pause clears pending retries so status stops translating', async () => {
     vi.useFakeTimers();
     paragraphs(1);
