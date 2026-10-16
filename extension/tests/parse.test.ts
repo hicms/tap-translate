@@ -29,6 +29,11 @@ describe('parseTranslationArray', () => {
     expect(parseTranslationArray('{"0":"  spaced  "}', 1)).toEqual(['spaced']);
   });
 
+  it.each([null, false, 42, {}, []])('keeps non-string JSON values out of translations: %j', value => {
+    expect(parseTranslationArray(JSON.stringify(['你好', value]), 2)).toEqual(['你好', '']);
+    expect(parseTranslationArray(JSON.stringify({ 0: '你好', 1: value }), 2)).toEqual(['你好', '']);
+  });
+
   it('throws when the count cannot be recovered (triggers bisect upstream)', () => {
     expect(() => parseTranslationArray('totally unparseable\nblob\nof\ntext', 2)).toThrow();
   });

@@ -9,6 +9,7 @@ import { collectSlotTextNodes, collectVisibleTextNodes } from '../collector';
 import { clearLoadingDom } from './loading';
 import { buildSafeRichSkeleton } from './rich';
 import { replaceTextNodes, restoreReplacedText } from './replacement';
+import { hasTranslationText } from '../translation-result';
 
 export { buildSafeRichSkeleton, sanitizeHref, isForbiddenAttr } from './rich';
 
@@ -616,6 +617,11 @@ function renderCore(
   onBlock: (host: HTMLElement, node: HTMLElement) => void,
 ): void {
   const { el, kind } = unit;
+
+  // Validate the entire payload before touching any source nodes. A partial
+  // rich result must never erase a link or another untranslated text slot.
+  const values = Array.isArray(payload) ? payload : [payload];
+  if (!values.length || !Array.from(values).every(hasTranslationText)) return;
 
   if (isEffectivelyUnchanged(unit, payload)) {
     // Mark the unit as processed so a new session does not collect it again.

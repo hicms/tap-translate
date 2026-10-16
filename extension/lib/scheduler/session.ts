@@ -13,6 +13,7 @@ import {
   type ShellReservation,
 } from '../renderer';
 import { lookup, store } from '../cache';
+import { hasTranslationText } from '../translation-result';
 import { isLikelyAlreadyTarget } from '../provider';
 import { translateBatchViaPort, isAbortError } from '../messaging';
 import { getUiMessage } from '../i18n';
@@ -606,7 +607,7 @@ export class ContentSession {
       const missTexts: string[] = [];
       jobs.forEach((job, i) => {
         const hit = cached[i];
-        if (hit) markSlot(job, hit);
+        if (hasTranslationText(hit)) markSlot(job, hit);
         else {
           missJobs.push(job);
           missTexts.push(job.text);
@@ -633,7 +634,7 @@ export class ContentSession {
           const fresh: { text: string; translation: string }[] = [];
           missJobs.forEach((job, i) => {
             const tr = translations[i];
-            if (tr) {
+            if (hasTranslationText(tr)) {
               markSlot(job, tr);
               fresh.push({ text: job.text, translation: tr });
             }

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, restoreDom, restoreUnit } from '../lib/renderer';
-import { extractRichSlots, mutationHasNewContent, mutationIndexDelta } from '../lib/collector';
-import type { TranslationUnit } from '../lib/types';
+import { render, renderBatch, restoreDom, restoreUnit } from '../lib/renderer';
+import { collectUnits, extractRichSlots, mutationHasNewContent, mutationIndexDelta } from '../lib/collector';
+import type { TranslationPayload, TranslationUnit } from '../lib/types';
 
 function richUnit(el: HTMLElement): TranslationUnit {
   const slots = extractRichSlots(el);
@@ -20,6 +20,43 @@ describe('replacement preserves live page nodes', () => {
     restoreDom();
     document.body.replaceChildren();
     vi.restoreAllMocks();
+  });
+
+  it.each([
+    undefined, null, '', ' \t\n\u00a0', '\u200b\u200e\u2060', [],
+    [''], [null], ['阅读', '', '现在。'], ['阅读', undefined, '现在。'],
+    Array(3),
+  ].map(result => ({ result })))('preserves source DOM for an invalid result: $result', ({ result }) => {
+    for (const mode of ['replace', 'bilingual'] as const) {
+      for (const rich of [false, true]) {
+        document.body.innerHTML = '<p lang="en" dir="ltr">Read <a href="#docs">the docs</a> now.</p>';
+        const p = document.querySelector('p')!;
+        const link = p.querySelector('a');
+        const before = p.outerHTML;
+        const unit = rich ? richUnit(p) : { el: p, text: p.textContent!, kind: 'block' as const };
+        const payload = result as TranslationPayload;
+        expect(() => render(unit, payload, mode)).not.toThrow();
+        expect(p.outerHTML).toBe(before);
+        renderBatch([{ unit, payload }], mode);
+        expect(p.outerHTML).toBe(before);
+        expect(p.querySelector('a')).toBe(link);
+      }
+    }
+  });
+
+  it.each([false, true])('keeps unchanged results in place (rich: %s)', rich => {
+    document.body.innerHTML = '<p lang="en" dir="ltr">Read <a href="#docs">the docs</a> now.</p>';
+    const p = document.querySelector('p')!;
+    const before = p.innerHTML;
+    const link = p.querySelector('a');
+    const unit = rich ? richUnit(p) : { el: p, text: p.textContent!, kind: 'block' as const };
+    render(unit, rich ? richUnit(p).rich!.slots : unit.text, 'replace', { targetLang: 'zh-CN' });
+    expect(p.innerHTML).toBe(before);
+    expect(p.querySelector('a')).toBe(link);
+    expect(p.lang).toBe('en');
+    expect(p.dir).toBe('ltr');
+    restoreDom();
+    expect(p.innerHTML).toBe(before);
   });
 
   it('keeps the original rich link, focus, event target, attributes and text nodes', () => {
@@ -143,5 +180,24 @@ describe('replacement preserves live page nodes', () => {
     render(richUnit(p), ['不完整'], 'replace');
     expect(p.innerHTML).toBe(before);
     expect(p.querySelector('a')).toBe(link);
+  });
+
+  it.each(['flex', 'inline-flex', 'grid', 'inline-grid'])('keeps separate tag labels populated inside a %s container', display => {
+    // Deaimer research cards: both badges are plain spans, without rich markup.
+    document.body.innerHTML = `<main><div class="rs-tags" style="display:${display};gap:6px"><span class="rs-tag-topic" style="background:#ffedd5">Model Evaluation</span><span class="rs-tag-type" style="background:#f1f5f9">Paper</span></div></main>`;
+    const host = document.querySelector<HTMLElement>('.rs-tags')!;
+    const topic = host.children[0];
+    const type = host.children[1];
+    const before = host.outerHTML;
+    const units = collectUnits();
+    expect(units).toHaveLength(1);
+    const unit = units[0];
+    render(unit, unit.rich ? ['模型评估', '论文'] : '模型评估 论文', 'replace');
+    expect(topic.textContent).toBe('模型评估');
+    expect(type.textContent).toBe('论文');
+    expect(host.children[0]).toBe(topic);
+    expect(host.children[1]).toBe(type);
+    restoreDom();
+    expect(host.outerHTML).toBe(before);
   });
 });

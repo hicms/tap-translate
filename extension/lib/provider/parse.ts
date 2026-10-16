@@ -11,15 +11,17 @@ function stripFences(raw: string): string {
 
 function fromParsed(parsed: unknown, expectedLen: number): string[] | null {
   if (Array.isArray(parsed) && parsed.length === expectedLen) {
-    return parsed.map((item) => String(item).trim());
+    // Preserve alignment, but leave invalid values empty for the scheduler's
+    // failure/retry path instead of rendering "null" or "[object Object]".
+    return parsed.map((item) => typeof item === 'string' ? item.trim() : '');
   }
   if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
     const obj = parsed as Record<string, unknown>;
     const out: string[] = [];
     for (let i = 0; i < expectedLen; i++) {
-      const val = obj[String(i)] ?? obj[i as unknown as string];
-      if (val == null) return null;
-      out.push(String(val).trim());
+      if (!Object.hasOwn(obj, String(i))) return null;
+      const val = obj[String(i)];
+      out.push(typeof val === 'string' ? val.trim() : '');
     }
     return out;
   }

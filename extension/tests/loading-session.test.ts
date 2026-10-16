@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentSession } from '../lib/scheduler/session';
 import { translateBatchViaPort } from '../lib/messaging';
-import { lookup } from '../lib/cache';
+import { lookup, store } from '../lib/cache';
 import { TapTranslateError } from '../lib/errors';
 import { collectSlotTextNodes, collectUnits, mutationHasNewContent } from '../lib/collector';
 import { buildSafeRichSkeleton, restoreDom } from '../lib/renderer';
@@ -54,6 +54,7 @@ beforeEach(() => {
   document.body.innerHTML = '<main><p id="first">Read the article before continuing.</p><p id="second">Another paragraph waits for a separate request.</p></main>';
   requests = [];
   vi.mocked(lookup).mockReset().mockImplementation(async texts => texts.map(() => null));
+  vi.mocked(store).mockClear();
   vi.mocked(translateBatchViaPort).mockReset().mockImplementation(texts => new Promise((resolve, reject) => requests.push({ texts, resolve, reject })));
 });
 
@@ -283,15 +284,56 @@ describe('paragraph loading feedback', () => {
     expect(session.status().count).toBe(1);
   });
 
-  it('removes feedback for unchanged results and skips already-target text', async () => {
+  it.each(['bilingual', 'replace'] as const)('removes feedback for unchanged results in %s mode and skips already-target text', async mode => {
+    const original = document.querySelector('#first')!.firstChild;
     document.querySelector('#second')!.textContent = '这段文字已经是中文，不需要再次翻译。';
-    start();
+    start({ mode });
     await vi.advanceTimersByTimeAsync(200);
     expect(requests).toHaveLength(1);
     requests[0].resolve(requests[0].texts);
     await vi.advanceTimersByTimeAsync(500);
     expect(document.querySelector('.tap-translate-loading')).toBeNull();
     expect(document.querySelector('.tap-translate-target')).toBeNull();
+    expect(document.querySelector('#first')!.firstChild).toBe(original);
+    expect(original!.textContent).toBe('Read the article before continuing.');
+  });
+
+  it.each([[], [''], [' \t\n\u00a0'], ['\u200b\u200e\u2060']].map(results => ({ results })))('keeps source text and retries an empty/missing response: $results', async ({ results }) => {
+    document.querySelector('#second')!.remove();
+    const source = document.querySelector('#first')!;
+    const original = source.firstChild!;
+    const session = start({ mode: 'replace' });
+    await vi.advanceTimersByTimeAsync(200);
+    requests[0].resolve(results);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(original.textContent).toBe('Read the article before continuing.');
+    expect(source.firstChild).toBe(original);
+    expect(source.hasAttribute('data-tap-translate-done')).toBe(false);
+    expect(session.status().count).toBe(0);
+    expect(store).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(requests).toHaveLength(2);
+    requests[1].resolve(['继续之前先阅读文章。']);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(source.textContent).toBe('继续之前先阅读文章。');
+    expect(session.status().count).toBe(1);
+    restoreDom();
+    expect(source.firstChild).toBe(original);
+    expect(source.textContent).toBe('Read the article before continuing.');
+  });
+
+  it('treats a blank cached result as a miss and waits for a valid translation', async () => {
+    document.querySelector('#second')!.remove();
+    vi.mocked(lookup).mockImplementation(async texts => texts.map(() => ' \u200b '));
+    const source = document.querySelector('#first')!;
+    start({ mode: 'replace' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(requests).toHaveLength(1);
+    expect(source.firstChild!.textContent).toBe('Read the article before continuing.');
+    requests[0].resolve(['继续之前先阅读文章。']);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(source.textContent).toBe('继续之前先阅读文章。');
   });
 
   it('keeps a new source revision loading when an old request completes on the same host', async () => {
