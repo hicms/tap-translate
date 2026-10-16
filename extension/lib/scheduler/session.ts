@@ -148,6 +148,7 @@ export class ContentSession {
   private registry: RootRegistry | null = null;
   private moTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingMutations: MutationRecord[] = [];
+  private pendingRevealedRoots = new Set<Element>();
   private watching = false;
   /** True while awaiting the first viewport drain — longer render coalesce. */
   private initialDrainActive = false;
@@ -264,6 +265,7 @@ export class ContentSession {
     if (this.moTimer) clearTimeout(this.moTimer);
     this.moTimer = null;
     this.pendingMutations = [];
+    this.pendingRevealedRoots.clear();
     if (this.flushTimer) clearTimeout(this.flushTimer);
     this.flushTimer = null;
     for (const entry of this.entries.values()) {
@@ -345,6 +347,7 @@ export class ContentSession {
     if (this.moTimer) clearTimeout(this.moTimer);
     this.moTimer = null;
     this.pendingMutations = [];
+    this.pendingRevealedRoots.clear();
     this.io = null;
     this.initialCheck?.();
     this.initialCheck = null;
@@ -876,14 +879,14 @@ export class ContentSession {
    * Incremental re-index from MutationRecords: only scan added/changed roots,
    * drop disconnected hosts, and invalidate characterData hosts.
    */
-  private indexFromMutations(mutations: MutationRecord[]): void {
+  private indexFromMutations(mutations: MutationRecord[], revealedRoots: Element[] = []): void {
     if (!this.alive || !this.io) return;
     const t0 = performance.now();
 
     this.registry?.pruneDisconnected();
     this.refreshDiagnostics();
 
-    const delta = mutationIndexDelta(mutations, this.entries.keys());
+    const delta = mutationIndexDelta(mutations, this.entries.keys(), revealedRoots);
 
     for (const host of delta.removed) {
       this.dropEntry(host);
@@ -931,39 +934,43 @@ export class ContentSession {
     this.registry = new RootRegistry(
       (mutations) => {
         if (!this.alive) return;
-        this.pendingMutations.push(...mutations);
-        if (this.moTimer) clearTimeout(this.moTimer);
-        this.moTimer = setTimeout(() => {
-          this.moTimer = null;
-          const batch = this.pendingMutations;
-          this.pendingMutations = [];
-          if (!this.alive || !batch.length) return;
-          const lateShadows = this.registry?.rescan(document) ?? [];
-          if (lateShadows.length) this.ignoreFloating(this.indexScopes(lateShadows));
-          if (mutationHasNewContent(batch) || lateShadows.length) {
-            if (mutationHasNewContent(batch)) this.indexFromMutations(batch);
-            else this.refreshDiagnostics();
-            return;
-          }
-          let pruned = false;
-          for (const host of Array.from(this.entries.keys())) {
-            if (!host.isConnected) {
-              this.dropEntry(host);
-              pruned = true;
-            }
-          }
-          this.registry?.pruneDisconnected();
-          if (pruned) this.checkSettle();
-        }, 320);
+        const relevant = mutations.filter(m => m.type !== 'attributes' || mutationHasNewContent([m]));
+        if (!relevant.length) return;
+        this.pendingMutations.push(...relevant);
+        this.scheduleMutationIndex();
       },
       (addedRoots) => {
         if (!this.alive) return;
         this.ignoreFloating(this.indexScopes(addedRoots));
         this.refreshDiagnostics();
       },
+      (root) => {
+        if (!this.alive) return;
+        this.pendingRevealedRoots.add(root);
+        this.scheduleMutationIndex();
+      },
     );
     this.registry.bootstrap(document);
     this.refreshDiagnostics();
+  }
+
+  private scheduleMutationIndex(): void {
+    // Bound the wait: continuous style/animation updates must not starve work.
+    if (this.moTimer) return;
+    this.moTimer = setTimeout(() => {
+      this.moTimer = null;
+      const batch = this.pendingMutations;
+      const revealedRoots = Array.from(this.pendingRevealedRoots);
+      this.pendingMutations = [];
+      this.pendingRevealedRoots.clear();
+      if (!this.alive || !this.watching) return;
+      // Attribute-only reveals do not require a full shadow-root discovery walk.
+      if (batch.some(m => m.type !== 'attributes')) {
+        const lateShadows = this.registry?.rescan(document) ?? [];
+        if (lateShadows.length) this.ignoreFloating(this.indexScopes(lateShadows));
+      }
+      this.indexFromMutations(batch, revealedRoots);
+    }, 320);
   }
 
   private awaitInitialDrain(): Promise<void> {

@@ -38,12 +38,15 @@ function applyTranslationLang(node: HTMLElement, opts?: RenderOpts): void {
   else node.removeAttribute('lang');
 }
 
-function stashLanguageAttrs(el: HTMLElement): void {
+function stashLanguageAttrs(el: HTMLElement, translatedLabel?: string): void {
   if (el.hasAttribute(STASH_LANGUAGE_ATTRS)) return;
   el.setAttribute(STASH_LANGUAGE_ATTRS, JSON.stringify({
     // getAttribute distinguishes an absent attribute (null) from lang="".
     lang: el.getAttribute('lang'),
     dir: el.getAttribute('dir'),
+    ...(translatedLabel !== undefined ? {
+      ariaLabel: { original: el.getAttribute('aria-label'), translated: translatedLabel },
+    } : {}),
   }));
 }
 
@@ -51,11 +54,18 @@ function restoreLanguageAttrs(el: HTMLElement): void {
   const raw = el.getAttribute(STASH_LANGUAGE_ATTRS);
   if (raw == null) return;
   try {
-    const saved = JSON.parse(raw) as { lang?: unknown; dir?: unknown };
+    const saved = JSON.parse(raw) as {
+      lang?: unknown; dir?: unknown;
+      ariaLabel?: { original?: unknown; translated?: unknown };
+    };
     if (typeof saved.lang === 'string') el.setAttribute('lang', saved.lang);
     else el.removeAttribute('lang');
     if (typeof saved.dir === 'string') el.setAttribute('dir', saved.dir);
     else el.removeAttribute('dir');
+    if (saved.ariaLabel && el.getAttribute('aria-label') === saved.ariaLabel.translated) {
+      if (typeof saved.ariaLabel.original === 'string') el.setAttribute('aria-label', saved.ariaLabel.original);
+      else el.removeAttribute('aria-label');
+    }
   } catch {
     // A page script tampered with our marker. Remove only attributes applied
     // by rich replace rather than aborting the rest of full-page restore.
@@ -543,7 +553,9 @@ function renderReplacement(unit: TranslationUnit, payload: TranslationPayload, o
     replacements = nodes.map((node, index) => [node, index === 0 ? asPlainText(payload) : '']);
   }
   replaceTextNodes(el, replacements);
-  stashLanguageAttrs(el);
+  const translatedLabel = unit.splitText ? asPlainText(payload) : undefined;
+  stashLanguageAttrs(el, translatedLabel);
+  if (translatedLabel !== undefined) el.setAttribute('aria-label', translatedLabel);
   applyTranslationLang(el, opts);
   el.setAttribute(DONE, 'true');
   el.setAttribute(MODE, 'replace');

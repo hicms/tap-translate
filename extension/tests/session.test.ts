@@ -189,6 +189,87 @@ describe('ContentSession scheduling state machine', () => {
     vi.useRealTimers();
   });
 
+  it.each(['bilingual', 'replace'] as const)('translates class-only reveals once in %s mode', async (mode) => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `<style>.rv { opacity:0 } .rv.in { opacity:1 }</style>
+      <main><section class="rv"><h2>Three data programs.</h2><p>Existing hidden paragraph.</p></section></main>`;
+    vi.mocked(translateBatchViaPort).mockImplementation(async texts => texts.map(t => `译:${t}`));
+    const session = new ContentSession(config({ mode }));
+    try {
+      expect((await session.start()).total).toBe(0);
+      document.querySelector('section')!.classList.add('in');
+      await vi.advanceTimersByTimeAsync(1_500);
+      expect(document.querySelector('h2')!.textContent).toContain('译:Three data programs.');
+      expect(document.querySelector('p')!.textContent).toContain('译:Existing hidden paragraph.');
+      const calls = vi.mocked(translateBatchViaPort).mock.calls.length;
+      document.querySelector('section')!.dispatchEvent(new Event('transitionend', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(3_000);
+      expect(translateBatchViaPort).toHaveBeenCalledTimes(calls);
+      expect(session.status()).toMatchObject({ total: 2, count: 2 });
+      session.restore();
+      expect(document.querySelector('h2')!.textContent).toBe('Three data programs.');
+    } finally {
+      session.dispose('stop');
+    }
+  });
+
+  it.each(['transitionend', 'animationend'])('rechecks delayed reveals on %s and removes listeners on pause', async eventName => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<main><section style="opacity:0"><p>Delayed content.</p></section></main>';
+    vi.mocked(translateBatchViaPort).mockResolvedValue(['延迟显示的内容']);
+    const section = document.querySelector('section')!;
+    const realStyle = window.getComputedStyle;
+    let revealed = false;
+    vi.spyOn(window, 'getComputedStyle').mockImplementation(el => {
+      const style = realStyle(el);
+      if (el === section) Object.defineProperty(style, 'opacity', { value: revealed ? '1' : '0' });
+      return style;
+    });
+    const session = new ContentSession(config());
+    try {
+      await session.start();
+      section.classList.add('in');
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(translateBatchViaPort).not.toHaveBeenCalled();
+      // CSS animation progresses without a new DOM mutation.
+      revealed = true;
+      section.dispatchEvent(new Event(eventName, { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(1_500);
+      expect(document.querySelector('p')!.textContent).toContain('延迟显示的内容');
+      session.pause();
+      document.querySelector('p')!.remove();
+      section.innerHTML = '<p>After pausing.</p>';
+      section.dispatchEvent(new Event(eventName, { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(1_500);
+      expect(translateBatchViaPort).toHaveBeenCalledTimes(1);
+    } finally {
+      session.dispose('stop');
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('collects labelled animation text despite continuous fragment style updates', async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<main><p aria-label="Animated paragraph content."><span aria-hidden="true" style="opacity:0">Animated paragraph content.</span></p></main>';
+    vi.mocked(translateBatchViaPort).mockResolvedValue(['动画段落内容。']);
+    const session = new ContentSession(config());
+    const line = document.querySelector('span')!;
+    let tick = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    try {
+      await session.start();
+      timer = setInterval(() => { line.style.opacity = ++tick % 2 ? '0.1' : '1'; }, 50);
+      await vi.advanceTimersByTimeAsync(1_500);
+      expect(document.querySelector('p')!.textContent).toContain('动画段落内容。');
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(translateBatchViaPort).toHaveBeenCalledTimes(1);
+      expect(session.status()).toMatchObject({ total: 1, count: 1 });
+    } finally {
+      clearInterval(timer);
+      session.dispose('stop');
+    }
+  });
+
   it.each(['AUTH_INVALID', 'MODEL_PARAMETERS_INVALID'] as const)('sends %s straight to terminal (no auto retry)', async (code) => {
     vi.useFakeTimers();
     paragraphs(1);

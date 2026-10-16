@@ -146,9 +146,11 @@ export interface TranslationUnit {
   /** Joined plain text (cache key / skip detection / logging). */
   text: string;
   kind: UnitKind;
-  /** Present for mixed-content segments (replace-mode aware). */
+  /** Source nodes for mixed-content segments or labelled animation text. */
   nodes?: Text[];
   segment?: boolean;
+  /** Visible split-text fragments repeat the semantic host's aria-label. */
+  splitText?: boolean;
   /** When set, render via safe rich skeleton + filled slots. */
   rich?: RichMeta;
 }

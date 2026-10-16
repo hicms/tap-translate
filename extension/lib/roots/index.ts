@@ -7,6 +7,9 @@
  * - Cross-origin / opaque frames are reported honestly as unsupported barriers.
  */
 
+import { VISIBILITY_ATTRIBUTES } from '../dom-const';
+import { isPageVisibilityTarget } from '../dom-guards';
+
 export type WatchRoot = Document | ShadowRoot | Element;
 
 export interface FrameBarrier {
@@ -104,12 +107,21 @@ export class RootRegistry {
   private readonly watchers = new Map<WatchRoot, MutationObserver>();
   private readonly onMutations: MutationHandler;
   private readonly onRootsChanged: RootsChangedHandler | null;
+  private readonly onRevealed: ((root: Element) => void) | undefined;
   private disposed = false;
 
-  constructor(onMutations: MutationHandler, onRootsChanged?: RootsChangedHandler) {
+  constructor(onMutations: MutationHandler, onRootsChanged?: RootsChangedHandler, onRevealed?: (root: Element) => void) {
     this.onMutations = onMutations;
     this.onRootsChanged = onRootsChanged ?? null;
+    this.onRevealed = onRevealed;
   }
+
+  // A delayed transition can still be fully transparent at the mutation flush.
+  // Recheck its subtree once it finishes; no polling or document-wide rescan.
+  private readonly onMotionEnd = (event: Event): void => {
+    if (this.disposed || !(event.target instanceof Element)) return;
+    if (isPageVisibilityTarget(event.target)) this.onRevealed?.(event.target);
+  };
 
   get size(): number {
     return this.watchers.size;
@@ -143,7 +155,12 @@ export class RootRegistry {
       if (newly.length) this.onRootsChanged?.(newly);
       this.onMutations(mutations, root);
     });
-    mo.observe(root, { childList: true, subtree: true, characterData: true });
+    mo.observe(root, {
+      childList: true, subtree: true, characterData: true,
+      attributes: true, attributeFilter: VISIBILITY_ATTRIBUTES,
+    });
+    root.addEventListener('transitionend', this.onMotionEnd, true);
+    root.addEventListener('animationend', this.onMotionEnd, true);
     this.watchers.set(root, mo);
     return true;
   }
@@ -186,6 +203,8 @@ export class RootRegistry {
             : (root as Element).isConnected;
       if (!alive) {
         mo.disconnect();
+        root.removeEventListener('transitionend', this.onMotionEnd, true);
+        root.removeEventListener('animationend', this.onMotionEnd, true);
         this.watchers.delete(root);
       }
     }
@@ -193,7 +212,11 @@ export class RootRegistry {
 
   dispose(): void {
     this.disposed = true;
-    for (const mo of this.watchers.values()) mo.disconnect();
+    for (const [root, mo] of this.watchers) {
+      mo.disconnect();
+      root.removeEventListener('transitionend', this.onMotionEnd, true);
+      root.removeEventListener('animationend', this.onMotionEnd, true);
+    }
     this.watchers.clear();
   }
 }

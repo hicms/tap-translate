@@ -319,6 +319,33 @@ describe('incremental mutation index', () => {
     expect(delta.added.every((u) => u.el.id !== 'old')).toBe(true);
   });
 
+  it.each([
+    ['class="rv" style="opacity:0"', (el: HTMLElement) => { el.style.opacity = '1'; }],
+    ['hidden', (el: HTMLElement) => { el.hidden = false; }],
+    ['aria-hidden="true"', (el: HTMLElement) => { el.removeAttribute('aria-hidden'); }],
+  ] as const)('indexes an existing subtree when it becomes visible: %s', async (attrs, reveal) => {
+    document.body.innerHTML = `<main><p id="old">Already visible prose</p>
+      <section id="reveal" ${attrs}><h2>Three data programs.</h2><p>Late visible content</p></section></main>`;
+    const known = collectUnits().map(u => u.el);
+    expect(known.map(el => el.id)).toEqual(['old']);
+    const mutations = await captureMutations(() => reveal(document.getElementById('reveal')!));
+    expect(mutationHasNewContent(mutations)).toBe(true);
+    const delta = mutationIndexDelta(mutations, known);
+    expect(delta.added.map(u => u.text)).toEqual(['Three data programs.', 'Late visible content']);
+    expect(delta.invalidated).toEqual([]);
+    expect(mutationIndexDelta(mutations, [...known, ...delta.added.map(u => u.el)]).added).toEqual([]);
+  });
+
+  it('ignores renderer and editable attribute changes', async () => {
+    document.body.innerHTML = `<p ${DONE}="true">Translated original</p>
+      <div class="tap-translate-target">Translation</div><div contenteditable="true">Editor content</div>`;
+    const mutations = await captureMutations(() => {
+      for (const el of Array.from(document.body.children)) el.setAttribute('style', 'opacity:1');
+    });
+    expect(mutationHasNewContent(mutations)).toBe(false);
+    expect(mutationIndexDelta(mutations, []).added).toEqual([]);
+  });
+
   it('mutationIndexDelta marks disconnected known hosts as removed', async () => {
     document.body.innerHTML = `
       <main>
@@ -640,7 +667,7 @@ async function captureMutations(mutate: () => void): Promise<MutationRecord[]> {
     const mo = new MutationObserver((batch) => {
       records.push(...batch);
     });
-    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true });
     mutate();
     queueMicrotask(() => {
       mo.disconnect();

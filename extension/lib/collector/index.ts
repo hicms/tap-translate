@@ -2,10 +2,10 @@ import type { TranslationUnit, UnitKind } from '../types';
 import {
   AUX_NAV, BLOCKS, CHROME, CLS_BLOCK, CLS_ERR, DONE, EDITABLE,
   INLINE_HOST, INLINE_MAX, INTERACTIVE, NAV, NAV_CHROME, NO_TEXT, OURS_SEL,
-  PAGE_NAV, PAGE_NAV_EL, SKIP,
+  PAGE_NAV, PAGE_NAV_EL, SKIP, VISIBILITY_ATTRIBUTES,
 } from '../dom-const';
 import { isCompactControlHost } from '../dom-role';
-import { isA11yHidden as isA11y, isOursElement } from '../dom-guards';
+import { isA11yHidden as isA11y, isOursElement, isPageVisibilityTarget } from '../dom-guards';
 import { yieldToMain } from '../runtime/yield';
 import { isReplacementWrite } from '../renderer/replacement';
 import {
@@ -15,6 +15,8 @@ import {
 import { needsRichSlots } from './rich-policy';
 
 export { isA11yHidden, isOursElement } from '../dom-guards';
+
+const SPLIT_TEXT_HOST = 'p[aria-label], h1[aria-label], h2[aria-label], h3[aria-label], h4[aria-label], h5[aria-label], h6[aria-label]';
 
 interface Segment {
   anchor: HTMLElement;
@@ -79,6 +81,10 @@ async function withCollectCacheAsync<T>(fn: () => Promise<T>): Promise<T> {
 
 export function mutationHasNewContent(mutations: MutationRecord[]): boolean {
   for (const m of mutations) {
+    if (m.type === 'attributes') {
+      if (isVisibilityMutation(m)) return true;
+      continue;
+    }
     if (m.type === 'characterData') {
       const text = m.target as Text;
       if (isReplacementWrite(text)) continue;
@@ -110,6 +116,11 @@ export function mutationHasNewContent(mutations: MutationRecord[]): boolean {
   return false;
 }
 
+function isVisibilityMutation(m: MutationRecord): boolean {
+  return VISIBILITY_ATTRIBUTES.includes(m.attributeName ?? '')
+    && m.target instanceof Element && isPageVisibilityTarget(m.target);
+}
+
 /** Collapse nested roots so a parent subtree is indexed once. */
 export function dedupeNestedRoots(roots: Element[]): Element[] {
   const unique = Array.from(new Set(roots.filter(Boolean)));
@@ -129,6 +140,10 @@ export function collectMutationRoots(mutations: MutationRecord[]): Element[] {
   const roots = new Set<Element>();
 
   for (const m of mutations) {
+    if (m.type === 'attributes') {
+      if (isVisibilityMutation(m)) roots.add(m.target as Element);
+      continue;
+    }
     if (m.type === 'characterData') {
       if (isReplacementWrite(m.target as Text)) continue;
       const p = (m.target as Text).parentElement;
@@ -152,7 +167,11 @@ export function collectMutationRoots(mutations: MutationRecord[]): Element[] {
     }
   }
 
-  return dedupeNestedRoots(Array.from(roots));
+  return dedupeNestedRoots(Array.from(roots, root => {
+    // A line/character animation changes its own style, but translation belongs
+    // to the complete labelled paragraph, never to individual visual fragments.
+    return root.closest(SPLIT_TEXT_HOST) ?? root;
+  }));
 }
 
 export interface MutationIndexDelta {
@@ -171,6 +190,7 @@ export interface MutationIndexDelta {
 export function mutationIndexDelta(
   mutations: MutationRecord[],
   knownHosts: Iterable<HTMLElement>,
+  revealedRoots: Element[] = [],
 ): MutationIndexDelta {
   const known = new Set<HTMLElement>();
   for (const h of knownHosts) known.add(h);
@@ -210,7 +230,10 @@ export function mutationIndexDelta(
   // Drop hosts that are both removed and invalidated.
   for (const host of removed) invalidated.delete(host);
 
-  const roots = collectMutationRoots(mutations).filter((r) => {
+  const roots = [
+    ...collectMutationRoots(mutations),
+    ...revealedRoots.filter(isPageVisibilityTarget).map(root => root.closest(SPLIT_TEXT_HOST) ?? root),
+  ].filter((r) => {
     // Skip roots that live entirely under an invalidated host — caller will
     // restoreUnit + collectUnits(host) after clearing DONE.
     for (const host of invalidated) {
@@ -284,12 +307,12 @@ function isPageNavRegion(el: Element | null): boolean {
 }
 
 /** True when this element alone would hide itself (ancestors not considered). */
-function isSelfStyleHidden(el: Element): boolean {
-  const cached = collectCache?.selfHidden.get(el);
+function isSelfStyleHidden(el: Element, ignoreAria = false): boolean {
+  const cached = ignoreAria ? undefined : collectCache?.selfHidden.get(el);
   if (cached !== undefined) return cached;
 
   let hidden = false;
-  if ((el as HTMLElement).hidden || el.getAttribute('aria-hidden') === 'true') {
+  if ((el as HTMLElement).hidden || (!ignoreAria && el.getAttribute('aria-hidden') === 'true')) {
     hidden = true;
   } else {
     const s = getComputedStyle(el);
@@ -310,8 +333,34 @@ function isSelfStyleHidden(el: Element): boolean {
       || parseFloat(s.opacity) === 0
       || clippedAssistiveText;
   }
-  collectCache?.selfHidden.set(el, hidden);
+  if (!ignoreAria) collectCache?.selfHidden.set(el, hidden);
   return hidden;
+}
+
+/**
+ * SplitText-style animations expose one accessible label and hide their visual
+ * lines/words from AT. Admit only exact duplicate prose, with every fragment
+ * actually painted; ordinary aria-hidden content stays excluded everywhere else.
+ */
+function splitTextNodes(host: Element): Text[] | null {
+  if (!host.matches(SPLIT_TEXT_HOST) || underDone(host)) return null;
+  const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
+  const label = normalize(host.getAttribute('aria-label') ?? '');
+  if (!okText(label) || normalize(host.textContent ?? '') !== label) return null;
+  const descendants = Array.from(host.querySelectorAll('*'));
+  if (!descendants.length || descendants.some(el =>
+    !/^(DIV|SPAN|BR)$/.test(el.tagName) || isPreservedElement(el)
+    || isA11y(el) || isSelfStyleHidden(el, true),
+  )) return null;
+  const nodes: Text[] = [];
+  const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.nodeValue?.trim()) continue;
+    const hidden = node.parentElement?.closest('[aria-hidden="true"]');
+    if (!hidden || hidden === host || !host.contains(hidden)) return null;
+    nodes.push(node as Text);
+  }
+  return nodes.length ? nodes : null;
 }
 
 function isVisible(el: Element | null): boolean {
@@ -782,6 +831,16 @@ function* collectPasses(
   for (const el of matchAll(scope, content ? `${BLOCKS}, ${content}` : BLOCKS)) {
     yield;
     if (inNav(el) || skip(el) || hasChildBlock(el)) continue;
+    const splitNodes = splitTextNodes(el);
+    if (splitNodes && !seen.has(el) && !splitNodes.some(node => seen.has(node))) {
+      seen.add(el);
+      for (const node of splitNodes) seen.add(node);
+      units.push({
+        el: el as HTMLElement, text: el.getAttribute('aria-label')!.replace(/\s+/g, ' ').trim(),
+        kind: 'block', nodes: splitNodes, splitText: true,
+      });
+      continue;
+    }
     if (tryCollectRichUnit(el, seen, units, false)) continue;
     if (hasInteractiveDescendant(el, false)) {
       collectMixedContentUnits(el, seen, units);

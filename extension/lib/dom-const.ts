@@ -29,11 +29,13 @@ export const HIDE = `${P}-original-hidden`;
 export const CLS_REPLACE = `${P}-replace-text`;
 export const STASH_ALL = `data-${P}-stash-all`;
 export const STASH_TEXT = `data-${P}-stash-text`;
-/** JSON snapshot of host lang/dir before rich replace mutates them. */
+/** Host lang/dir and optional split-text accessible label before replacement. */
 export const STASH_LANGUAGE_ATTRS = `data-${P}-stash-language-attrs`;
 /** Reserved min-height (px) on block bilingual shells to stabilize CLS. */
 export const SHELL = `data-${P}-shell`;
 export const INLINE_MAX = 100;
+/** Attributes that can reveal existing text without inserting DOM nodes. */
+export const VISIBILITY_ATTRIBUTES = ['class', 'style', 'hidden', 'aria-hidden', 'open'];
 
 export const SKIP = 'footer, [role="contentinfo"], form, fieldset';
 export const CHROME = 'body > header, [role="banner"]';

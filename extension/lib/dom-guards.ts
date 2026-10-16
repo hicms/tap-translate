@@ -1,4 +1,10 @@
-import { A11Y, CLS_BLOCK, CLS_ERR, CLS_REPLACE, HIDE, P } from './dom-const';
+import { A11Y, CLS_BLOCK, CLS_ERR, CLS_REPLACE, DONE, EDITABLE, HIDE, NO_TEXT, OURS_SEL, P } from './dom-const';
+
+/** Ignore renderer writes, controls and already-owned text when checking reveals. */
+export function isPageVisibilityTarget(el: Element): boolean {
+  return el.isConnected && !NO_TEXT.has(el.tagName)
+    && !el.closest(`${OURS_SEL}, ${EDITABLE}, [${DONE}]`);
+}
 
 const OWN_CLASSES = [
   CLS_BLOCK, `${P}-nav-sub`, `${P}-target--inline`, `${P}-target--inner`,
